@@ -95,9 +95,9 @@ function persistBoundsSoon() {
   }, 400);
 }
 
-function applyZoomFactor() {
-  if (!mainWindow || mainWindow.isDestroyed()) return;
-  mainWindow.webContents.setZoomFactor(clampZoom(settings.zoomFactor));
+function applyZoomFactor(target = mainWindow) {
+  if (!target || target.isDestroyed()) return;
+  target.webContents.setZoomFactor(clampZoom(settings.zoomFactor));
 }
 
 function setZoomFactor(value) {
@@ -386,11 +386,42 @@ async function fetchStats() {
   return response.json();
 }
 
+function revealWindow(target = mainWindow) {
+  if (!target || target.isDestroyed() || target.isVisible()) return;
+  target.show();
+}
+
+function loadWindowFile(target) {
+  let revealed = false;
+  const reveal = () => {
+    if (revealed) return;
+    revealed = true;
+    revealWindow(target);
+  };
+  const fallbackTimer = setTimeout(reveal, 2500);
+  const cleanup = () => clearTimeout(fallbackTimer);
+  target.once('show', cleanup);
+  target.once('closed', cleanup);
+  target.once('ready-to-show', reveal);
+  target.webContents.once('did-finish-load', () => {
+    applyZoomFactor(target);
+    reveal();
+  });
+  target.webContents.once('did-fail-load', (_event, code, description) => {
+    console.log(`[window] renderer load failed: ${code} ${description}`);
+    reveal();
+  });
+  target.loadFile(path.join(__dirname, 'renderer', 'index.html')).catch((error) => {
+    console.log(`[window] renderer load failed: ${error.message}`);
+    reveal();
+  });
+}
+
 function createWindow(boundsOverride) {
   if (!settings) settings = readSettings();
   const glass = nativeBlurEnabled();
   const bounds = boundsOverride || restoredBounds() || DEFAULT_WINDOW;
-  mainWindow = new BrowserWindow({
+  const win = new BrowserWindow({
     width: bounds.width,
     height: bounds.height,
     ...(typeof bounds.x === 'number' ? { x: bounds.x, y: bounds.y } : {}),
@@ -406,21 +437,19 @@ function createWindow(boundsOverride) {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
-      nodeIntegration: false,
-      zoomFactor: clampZoom(settings.zoomFactor)
+      nodeIntegration: false
     }
   });
+  mainWindow = win;
   applyWindowSettings();
   applyNativeMaterial();
   keepNativeBlurActive();
-  mainWindow.on('focus', keepNativeBlurActive);
-  mainWindow.on('blur', keepNativeBlurActive);
-  mainWindow.on('resized', persistBoundsSoon);
-  mainWindow.on('moved', persistBoundsSoon);
-  mainWindow.webContents.on('before-input-event', handleZoomShortcut);
-  mainWindow.webContents.on('did-finish-load', applyZoomFactor);
-  mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
-  mainWindow.once('ready-to-show', () => mainWindow.show());
+  win.on('focus', keepNativeBlurActive);
+  win.on('blur', keepNativeBlurActive);
+  win.on('resized', persistBoundsSoon);
+  win.on('moved', persistBoundsSoon);
+  win.webContents.on('before-input-event', handleZoomShortcut);
+  loadWindowFile(win);
 }
 
 function handleZoomShortcut(event, input) {
@@ -441,7 +470,7 @@ function rebuildWindow() {
   // Build the new window first so total window count never drops to 0
   // (otherwise window-all-closed fires and quits the app on Windows).
   createWindow(bounds);
-  mainWindow.once('ready-to-show', () => {
+  mainWindow.once('show', () => {
     if (!old.isDestroyed()) old.destroy();
     if (wasFocused && !mainWindow.isDestroyed()) mainWindow.focus();
   });
