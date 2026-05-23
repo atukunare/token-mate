@@ -52,7 +52,11 @@ Most usage monitors are useful on the machine they run on. Token Monitor is buil
 
 | Limits View | Devices View | Models View |
 |:---:|:---:|:---:|
-| ![Limits View](.github/assets/limits-view.png) | ![Devices View](.github/assets/devices-view.png) | ![Models View](.github/assets/models-view.png) | 
+| ![Limits View](.github/assets/limits-view.png) | ![Devices View](.github/assets/devices-view.png) | ![Models View](.github/assets/models-view.png) |
+
+| Discord Rich Presence | Menu bar mode | iOS Widget |
+|:---:|:---:|:---:|
+| ![Discord Rich Presence](.github/assets/discord-rpc.png) | ![Menu bar mode](.github/assets/menu-bar.png) | ![iOS Widget](.github/assets/ios-widget.png) |
 
 ## Supported Tools
 

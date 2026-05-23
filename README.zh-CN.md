@@ -54,6 +54,10 @@
 |:---:|:---:|:---:|
 | ![用量上限视图](.github/assets/limits-view.png) | ![设备视图](.github/assets/devices-view.png) | ![模型视图](.github/assets/models-view.png) |
 
+| Discord Rich Presence | 菜单栏模式 | iOS 小部件 |
+|:---:|:---:|:---:|
+| ![Discord Rich Presence](.github/assets/discord-rpc.png) | ![菜单栏模式](.github/assets/menu-bar.png) | ![iOS 小部件](.github/assets/ios-widget.png) |
+
 ## 支持的工具
 
 Token Monitor 对「Token 用量」和「账户用量上限」分别支持：
