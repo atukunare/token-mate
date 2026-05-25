@@ -68,12 +68,21 @@ const LIMIT_SOURCE_LABELS = { oauth: 'OAuth', cli: 'CLI', web: 'Web', rpc: 'CLI'
 const deviceColors = ['#49a3b0', '#6ab4f0', '#cc7c5e', '#a57df0', '#f0d66a', '#f06a7b'];
 const fallbackModelColors = ['#6ab4f0', '#cc7c5e', '#a57df0', '#49a3b0', '#f0d66a', '#f06a7b'];
 const baseBreakdownOrder = ['tool', 'device', 'model'];
-const state = { period: 'today', breakdown: 'tool', settings: null, stats: null, refreshTimer: null, currentTotal: 0, rowSignature: '', streamConnected: false, mode: 'idle', appInfo: null, tokscaleStatus: null, tokscaleCheck: null, tokscaleBusy: false };
+const state = { period: 'today', breakdown: 'tool', settings: null, stats: null, refreshTimer: null, currentTotal: 0, rowSignature: '', streamConnected: false, mode: 'idle', appInfo: null, tokscaleStatus: null, tokscaleCheck: null, tokscaleBusy: false, hubInfo: null };
 const defaultAppearance = { glassOpacity: 68, glassBlur: 32, zoomFactor: 1, systemGlass: true, showLiveDot: true, showToolIcons: true };
 const els = {
   shell: document.querySelector('.shell'), status: document.getElementById('status'), liveDot: document.getElementById('liveDot'), totalTokens: document.getElementById('totalTokens'), cost: document.getElementById('cost'), breakdown: document.getElementById('breakdown'), limitsPanel: document.getElementById('limitsPanel'), breakdownToggle: document.getElementById('breakdownToggle'), pinButton: document.getElementById('pinButton'), settingsButton: document.getElementById('settingsButton'), settingsPanel: document.getElementById('settingsPanel'), hubUrlInput: document.getElementById('hubUrlInput'), secretInput: document.getElementById('secretInput'), deviceIdInput: document.getElementById('deviceIdInput'), limitProviderCheckboxes: document.getElementById('limitProviderCheckboxes'), limitsRefreshInput: document.getElementById('limitsRefreshInput'), showLimitSourceInput: document.getElementById('showLimitSourceInput'), systemGlassInput: document.getElementById('systemGlassInput'), liveDotInput: document.getElementById('liveDotInput'), toolIconsInput: document.getElementById('toolIconsInput'), discordRpcInput: document.getElementById('discordRpcInput'), trayModeInput: document.getElementById('trayModeInput'), trayContentInput: document.getElementById('trayContentInput'), glassInput: document.getElementById('glassInput'), blurInput: document.getElementById('blurInput'), zoomInput: document.getElementById('zoomInput'), resetGlassButton: document.getElementById('resetGlassButton'), resetDepthButton: document.getElementById('resetDepthButton'), resetZoomButton: document.getElementById('resetZoomButton'), saveSettingsButton: document.getElementById('saveSettingsButton'), clientCheckboxes: document.getElementById('clientCheckboxes'), openConfigButton: document.getElementById('openConfigButton'), refreshButton: document.getElementById('refreshButton'), minButton: document.getElementById('minButton'), closeButton: document.getElementById('closeButton')
 };
 Object.assign(els, {
+  hubModeOptions: document.getElementById('hubModeOptions'),
+  hubClientFields: document.getElementById('hubClientFields'),
+  hubHostFields: document.getElementById('hubHostFields'),
+  hubPortInput: document.getElementById('hubPortInput'),
+  hubSecretInput: document.getElementById('hubSecretInput'),
+  hubSecretCopyButton: document.getElementById('hubSecretCopyButton'),
+  hubSecretRegenButton: document.getElementById('hubSecretRegenButton'),
+  hubStatusRow: document.getElementById('hubStatusRow'),
+  hubAddressList: document.getElementById('hubAddressList'),
   startupGroup: document.getElementById('startupGroup'),
   startAtLoginInput: document.getElementById('startAtLoginInput'),
   startupNote: document.getElementById('startupNote'),
@@ -655,7 +664,102 @@ async function saveAppearanceFromControls() {
   await saveSettings({ ...appearancePatchFromControls(), discordRpcEnabled: Boolean(els.discordRpcInput.checked) });
 }
 
+function syncHubModeUi() {
+  const mode = state.settings.hubMode || 'local';
+  for (const input of els.hubModeOptions.querySelectorAll('input[name="hubMode"]')) {
+    input.checked = input.value === mode;
+  }
+  els.hubClientFields.classList.toggle('hidden', mode !== 'client');
+  els.hubHostFields.classList.toggle('hidden', mode !== 'host');
+  if (mode === 'host') {
+    els.hubPortInput.value = String(state.settings.hubHostPort || 17321);
+    els.hubSecretInput.value = state.settings.hubHostSecret || '';
+    renderHubStatus();
+  }
+}
+
+function renderHubStatus() {
+  if (!els.hubStatusRow || !els.hubAddressList) return;
+  const info = state.hubInfo;
+  const port = Number(state.settings.hubHostPort || 17321);
+  if (!info) {
+    els.hubStatusRow.textContent = 'Starting…';
+    els.hubStatusRow.className = 'hub-status';
+    els.hubAddressList.replaceChildren();
+    return;
+  }
+  if (info.error) {
+    const code = info.error.code === 'EADDRINUSE' ? `Port ${port} already in use` : info.error.code || 'Error';
+    els.hubStatusRow.textContent = `${code} — ${info.error.message}`;
+    els.hubStatusRow.className = 'hub-status error';
+    els.hubAddressList.replaceChildren();
+    return;
+  }
+  if (!info.listening) {
+    els.hubStatusRow.textContent = 'Hub stopped';
+    els.hubStatusRow.className = 'hub-status';
+    els.hubAddressList.replaceChildren();
+    return;
+  }
+  els.hubStatusRow.textContent = `Listening on port ${info.listeningPort}`;
+  els.hubStatusRow.className = 'hub-status ok';
+  renderHubAddresses(info.lanAddresses || [], info.listeningPort);
+}
+
+function renderHubAddresses(addresses, port) {
+  els.hubAddressList.replaceChildren();
+  if (addresses.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'hub-address-empty';
+    empty.textContent = 'No LAN address detected. Other devices on this machine can use http://127.0.0.1:' + port + '.';
+    els.hubAddressList.appendChild(empty);
+    return;
+  }
+  const header = document.createElement('div');
+  header.className = 'hub-address-header';
+  header.textContent = 'Other devices connect with:';
+  els.hubAddressList.appendChild(header);
+  for (const addr of addresses) {
+    const url = `http://${addr.address}:${port}`;
+    const row = document.createElement('div');
+    row.className = 'hub-address-row';
+    const code = document.createElement('code');
+    code.textContent = url;
+    const ifaceLabel = document.createElement('span');
+    ifaceLabel.className = 'hub-address-iface';
+    ifaceLabel.textContent = addr.interface;
+    const copy = document.createElement('button');
+    copy.type = 'button';
+    copy.className = 'icon-button';
+    copy.title = `Copy ${url}`;
+    copy.textContent = '⧉';
+    copy.addEventListener('click', () => copyToClipboard(url, copy));
+    row.append(code, ifaceLabel, copy);
+    els.hubAddressList.appendChild(row);
+  }
+}
+
+async function copyToClipboard(text, button) {
+  try {
+    await navigator.clipboard.writeText(text);
+    if (button) {
+      const previous = button.textContent;
+      button.textContent = '✓';
+      setTimeout(() => { button.textContent = previous; }, 900);
+    }
+  } catch (_) { /* clipboard blocked; no-op */ }
+}
+
+async function refreshHubInfo() {
+  if (!window.tokenMonitor.getHubInfo) return;
+  try {
+    state.hubInfo = await window.tokenMonitor.getHubInfo();
+    renderHubStatus();
+  } catch (_) { /* ignore */ }
+}
+
 function syncSettingsForm() {
+  syncHubModeUi();
   els.hubUrlInput.value = state.settings.hubUrl || '';
   els.secretInput.value = state.settings.secret || '';
   els.deviceIdInput.value = state.settings.deviceId || '';
@@ -791,6 +895,7 @@ async function init() {
     state.settings.startAtLogin = Boolean(state.appInfo.loginItemOpenAtLogin);
   }
   syncSettingsForm();
+  await refreshHubInfo();
   await refreshTokscaleStatus();
   restartTimer();
   try {
@@ -830,8 +935,38 @@ els.settingsButton.addEventListener('click', () => {
   requestAnimationFrame(() => { els.shell.style.transform = ''; });
 });
 els.saveSettingsButton.addEventListener('click', async () => {
-  await saveSettings({ hubUrl: els.hubUrlInput.value.trim(), secret: els.secretInput.value, deviceId: els.deviceIdInput.value.trim() });
+  const patch = {
+    hubUrl: els.hubUrlInput.value.trim(),
+    secret: els.secretInput.value,
+    deviceId: els.deviceIdInput.value.trim()
+  };
+  if (state.settings.hubMode === 'host') {
+    patch.hubHostPort = Number(els.hubPortInput.value) || 17321;
+  }
+  await saveSettings(patch);
+  await refreshHubInfo();
   await refreshStats();
+});
+
+els.hubModeOptions.addEventListener('change', async (event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLInputElement) || target.name !== 'hubMode') return;
+  await saveSettings({ hubMode: target.value });
+  await refreshHubInfo();
+  await refreshStats();
+});
+
+els.hubSecretCopyButton?.addEventListener('click', () => {
+  copyToClipboard(els.hubSecretInput.value, els.hubSecretCopyButton);
+});
+
+els.hubSecretRegenButton?.addEventListener('click', async () => {
+  if (!window.tokenMonitor.regenerateHubSecret) return;
+  const info = await window.tokenMonitor.regenerateHubSecret();
+  state.hubInfo = info;
+  state.settings = { ...state.settings, hubHostSecret: info.secret };
+  els.hubSecretInput.value = info.secret;
+  renderHubStatus();
 });
 els.limitsRefreshInput.addEventListener('change', async () => {
   await saveSettings({ limitsRefreshMs: Number(els.limitsRefreshInput.value) });
@@ -881,6 +1016,22 @@ window.tokenMonitor.onSettingsPush?.((next) => {
   state.settings = next;
   syncSettingsForm();
   maybeUpdateBarsIcon();
+});
+
+window.tokenMonitor.onHubPush?.((payload) => {
+  if (!payload?.info) return;
+  state.hubInfo = payload.info;
+  // The first switch to Host mode generates the shared secret asynchronously
+  // after settings:update has already returned, so mirror the freshly minted
+  // value back into state + input — otherwise the Shared Secret field stays
+  // blank and other devices can't pair until the user clicks Regenerate.
+  if (payload.info.secret && payload.info.secret !== state.settings?.hubHostSecret) {
+    state.settings = { ...state.settings, hubHostSecret: payload.info.secret };
+    if (els.hubSecretInput && state.settings.hubMode === 'host') {
+      els.hubSecretInput.value = payload.info.secret;
+    }
+  }
+  renderHubStatus();
 });
 
 window.tokenMonitor.onTokscalePush?.((payload) => {

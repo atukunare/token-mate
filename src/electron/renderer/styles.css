@@ -254,6 +254,76 @@ input, textarea, [contenteditable="true"] {
   font-size: inherit;
 }
 .inline-link:hover { color: var(--text); }
+.hub-mode-options {
+  display: grid;
+  gap: 4px;
+}
+.settings-panel .hub-mode-option {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 7px 8px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, var(--control-alpha));
+  cursor: pointer;
+}
+.settings-panel .hub-mode-option:hover { border-color: var(--line-strong); }
+.settings-panel .hub-mode-option input[type="radio"] {
+  width: auto;
+  margin: 2px 0 0;
+  flex: 0 0 auto;
+  accent-color: var(--green);
+}
+.settings-panel .hub-mode-option:has(input:checked) {
+  border-color: rgba(115, 189, 245, 0.62);
+  background: rgba(115, 189, 245, 0.07);
+}
+.hub-mode-text { display: grid; gap: 1px; min-width: 0; }
+.hub-mode-text strong { color: var(--text); font-size: 11px; font-weight: 500; }
+.hub-mode-text span { color: var(--muted); font-size: 10px; line-height: 1.35; }
+.hub-mode-fields { display: grid; gap: 8px; }
+.hub-mode-fields.hidden { display: none; }
+.hub-secret-row { display: flex; align-items: center; gap: 6px; }
+.hub-secret-row input { flex: 1 1 auto; min-width: 0; }
+.hub-secret-row .icon-button { width: 30px; height: 30px; flex: 0 0 auto; font-size: 13px; }
+.hub-status {
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, var(--control-alpha));
+  color: var(--muted);
+  font-size: 10px;
+}
+.hub-status.ok { color: var(--green); border-color: rgba(183, 234, 212, 0.32); }
+.hub-status.error { color: var(--red); border-color: rgba(244, 119, 136, 0.42); }
+.hub-address-list { display: grid; gap: 5px; }
+.hub-address-header { color: var(--muted); font-size: 10px; }
+.hub-address-empty { color: var(--muted); font-size: 10px; line-height: 1.4; }
+.hub-address-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 7px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, var(--control-alpha));
+}
+.hub-address-row code {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 10.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hub-address-iface { color: var(--muted); font-size: 9.5px; flex: 0 0 auto; }
+.hub-address-row .icon-button { width: 26px; height: 26px; flex: 0 0 auto; font-size: 12px; }
+.settings-note.hub-warning { color: var(--orange); }
 .tokscale-lines {
   display: grid;
   gap: 5px;

@@ -1,5 +1,6 @@
 ﻿'use strict';
 
+const crypto = require('node:crypto');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
@@ -77,4 +78,80 @@ function pidFilePath() {
   return path.join(sharedDataDir(), 'agent.pid');
 }
 
-module.exports = { defaultDeviceId, loadDotEnv, parseArgs, pidFilePath, projectRoot, readJson, sharedDataDir, writeJsonAtomic };
+// Heuristics adapted from CrossPaste's AbstractNetworkInterfaceService — Node's
+// os.networkInterfaces() lacks Java's isVirtual()/isUp() flags, so we fall
+// back to name patterns + MAC OUI prefixes to detect virtualization /
+// tunnel / VPN interfaces that should not be advertised as LAN addresses.
+// Mirror CrossPaste's blacklist: vmnet, docker, veth, wsl, utun, bridge.
+// `feth` is intentionally NOT here — macOS uses it for legitimate bridges
+// like ZeroTier (10.147.x.x) and Internet Sharing.
+// Windows friendly names need extra patterns since Node can't read Java's
+// isVirtual() flag.
+const VIRTUAL_NAME_PATTERNS = [
+  /^vmnet/i, /^docker/i, /^veth/i, /^wsl/i, /^utun/i, /^bridge/i,
+  /^vboxnet/i, /^virbr/i, /^br-/i,
+  /vEthernet/i, /VMware/i, /VirtualBox/i, /Hyper-V/i, /WSL/i, /Loopback Pseudo/i
+];
+
+const VIRTUAL_MAC_PREFIXES = [
+  '00:50:56', '00:0c:29', '00:05:69', // VMware
+  '00:1c:14', '00:1c:42',             // Parallels
+  '08:00:27',                         // VirtualBox
+  '52:54:00',                         // QEMU / KVM
+  '00:15:5d',                         // Hyper-V / WSL
+  '02:42'                             // Docker (prefix matches 02:42:xx:xx:xx:xx)
+];
+
+function isVirtualInterfaceName(name) {
+  return VIRTUAL_NAME_PATTERNS.some((re) => re.test(name));
+}
+
+function isVirtualMac(mac) {
+  const m = String(mac || '').toLowerCase();
+  if (!m) return false;
+  return VIRTUAL_MAC_PREFIXES.some((prefix) => m.startsWith(prefix));
+}
+
+function isReservedIpv4(address) {
+  if (typeof address !== 'string') return false;
+  const last = address.split('.').pop();
+  // Reject network (.0) and broadcast (.255). Keep .1 — many self-hosted
+  // setups legitimately use it (e.g., the device IS the router).
+  return last === '0' || last === '255';
+}
+
+function lanIpv4Addresses() {
+  const out = [];
+  const seen = new Set();
+  let nets;
+  try { nets = os.networkInterfaces(); } catch (_) { return out; }
+  for (const [name, addrs] of Object.entries(nets || {})) {
+    if (isVirtualInterfaceName(name)) continue;
+    for (const addr of addrs || []) {
+      if (!addr || addr.family !== 'IPv4' || addr.internal) continue;
+      if (isReservedIpv4(addr.address)) continue;
+      if (isVirtualMac(addr.mac)) continue;
+      if (seen.has(addr.address)) continue;
+      seen.add(addr.address);
+      out.push({ address: addr.address, interface: name });
+    }
+  }
+  return out;
+}
+
+function generateHubSecret() {
+  return crypto.randomBytes(24).toString('base64url');
+}
+
+module.exports = {
+  defaultDeviceId,
+  generateHubSecret,
+  lanIpv4Addresses,
+  loadDotEnv,
+  parseArgs,
+  pidFilePath,
+  projectRoot,
+  readJson,
+  sharedDataDir,
+  writeJsonAtomic
+};

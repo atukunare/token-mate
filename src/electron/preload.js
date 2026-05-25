@@ -8,6 +8,13 @@ contextBridge.exposeInMainWorld('tokenMonitor', {
   previewAppearance: (patch) => ipcRenderer.invoke('appearance:preview', patch),
   getStats: () => ipcRenderer.invoke('stats:get'),
   getStreamStatus: () => ipcRenderer.invoke('stream:status'),
+  getHubInfo: () => ipcRenderer.invoke('hub:getInfo'),
+  regenerateHubSecret: () => ipcRenderer.invoke('hub:regenerateSecret'),
+  onHubPush: (callback) => {
+    const listener = (_event, payload) => { try { callback(payload); } catch (_) {} };
+    ipcRenderer.on('hub:push', listener);
+    return () => ipcRenderer.removeListener('hub:push', listener);
+  },
   onStatsPush: (callback) => {
     const listener = (_event, payload) => { try { callback(payload); } catch (_) {} };
     ipcRenderer.on('stats:push', listener);

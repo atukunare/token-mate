@@ -46,7 +46,7 @@
 - 外觀控制：玻璃透明度、模糊度、完全透明視窗
 - 選單列（macOS）與系統匣（Windows）彈出視窗，圖示旁可顯示成本、token 數，或 Claude／Codex 最接近用完的用量上限百分比
 - 本地優先：單裝置使用完全不需伺服器
-- 自架同步後端（Node hub 或 Cloudflare Worker）
+- 自架同步後端（小工具內 hub、Node CLI hub 或 Cloudflare Worker）
 - 透過 Worker hub 支援 iOS 小工具（Widgy、Scriptable）
 - Discord Rich Presence：將今日 Token、花費與主要工具廣播到你的 Discord 個人檔案（需手動開啟）
 - 隱私優先：只有摘要數字會離開你的機器
@@ -85,9 +85,15 @@ npm start
 
 ### 多裝置同步
 
-挑一個所有裝置（與任何無頭代理）都連得到的 hub 後端。在每台裝置上打開小工具，填入 設定 → 多裝置同步 → Hub URL + Secret。小工具會自動回報本機用量；只在沒有小工具的機器上跑 `npm run agent`。
+挑一個所有裝置（與任何無頭代理）都連得到的 hub 後端。在每台裝置上打開小工具，在 設定 → 多裝置同步 選一個模式。小工具會自動回報本機用量；只在沒有小工具的機器上跑 `npm run agent`。
 
-#### 選項 A——自架 Node hub（同一區網）
+#### 選項 A——直接在小工具內開 hub（最簡單，無需命令列）
+
+在一台持續開機的機器上打開小工具，進入 設定 → 多裝置同步，選 **Host hub on this device**。小工具會產生隨機 secret，並列出其他裝置可連入的區網 URL（Tailscale 或 ZeroTier 位址也會顯示在這裡）。在其他每台裝置上選 **Connect to a hub**，把 URL 與 secret 貼進去即可。
+
+只要 Token Monitor 還在跑，hub 就會運作——結束 App（僅關閉視窗不算）會停掉 hub，所有連入的裝置都會中斷。
+
+#### 選項 B——自架 Node hub（持續開機的無頭機器）
 
 ```bash
 # 在會持續開機的機器上
@@ -96,7 +102,7 @@ cp .env.example .env
 npm run hub
 ```
 
-#### 選項 B——Cloudflare Worker hub（跨網路，包括 iPhone）
+#### 選項 C——Cloudflare Worker hub（跨網路，包括 iPhone）
 
 [![部署到 Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Javis603/token-monitor/tree/main/worker)
 
@@ -135,7 +141,7 @@ App 狀態存在 OS 使用者資料目錄——解除安裝時一併刪除該資
     裝置 C agent ──▶
 ```
 
-小工具會根據設定裡是否填了 Hub URL 自動切換模式，沒有獨立的「模式」開關。同步模式下，hub 透過 Server-Sent Events 把彙總後的統計推送給每個連線中的小工具，所以一台裝置上的更新會在數秒內出現在其他裝置上。
+小工具會根據 設定 → 多裝置同步 決定走本地或同步模式。hub 本身可以是獨立的 `npm run hub` 程序、Cloudflare Worker，或直接跑在某一個小工具裡（Host 模式）。同步模式下，hub 透過 Server-Sent Events 把彙總後的統計推送給每個連線中的小工具，所以一台裝置上的更新會在數秒內出現在其他裝置上。
 
 ## 設定
 
@@ -143,7 +149,7 @@ App 狀態存在 OS 使用者資料目錄——解除安裝時一併刪除該資
 
 點擊小工具標題列上的 `⚙` 按鈕開啟設定面板。
 
-- **多裝置同步**——Hub URL 與 secret。Hub URL 留空即為本地模式（僅本機）。
+- **多裝置同步**——三種模式：**Local only**（僅本機，無 hub）、**Connect to a hub**（貼入其他機器的 Hub URL + secret）、**Host hub on this device**（在本機開 hub 供其他裝置連入；面板會列出可用的區網 / Tailscale / ZeroTier 位址）。
 - **追蹤的工具**——各支援 AI 工具的勾選框。切換立即生效，並會用新的客戶端清單重啟收集器。
 - **AI 工具用量上限**——選擇 Claude Code 與 Codex 的用量上限偵測與更新頻率。
 - **顯示模式**——可將浮動視窗改為 macOS 選單列或 Windows 系統匣的彈出視窗，並選擇圖示旁顯示的內容：成本、今日 token 數、累計 token 數、成本＋token、最接近用完的 Claude／Codex 用量上限百分比，或只顯示圖示。

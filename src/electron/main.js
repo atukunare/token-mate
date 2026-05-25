@@ -3,8 +3,9 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { app, BrowserWindow, ipcMain, nativeImage, screen, shell } = require('electron');
-const { defaultDeviceId, loadDotEnv, pidFilePath, sharedDataDir } = require('../shared/config');
+const { defaultDeviceId, generateHubSecret, lanIpv4Addresses, loadDotEnv, pidFilePath, sharedDataDir } = require('../shared/config');
 const { startCollector } = require('../shared/collector');
+const { createHub } = require('../hub/server');
 const { normalizeLimitsRefreshMs, parseBoolean, parseLimitProviders } = require('../shared/limitCollector');
 const {
   checkNpmForNewer,
@@ -26,6 +27,8 @@ const DEFAULT_WINDOW = { width: 360, height: 500 };
 const WINDOW_LIMITS = { minWidth: 240, minHeight: 140, maxWidth: 1200, maxHeight: 1400 };
 const ZOOM_LIMITS = { min: 0.7, max: 1.6, step: 0.1 };
 const TRAY_CONTENT_VALUES = new Set(['tokens', 'cost', 'both', 'tokensAll', 'costAll', 'bothAll', 'bars', 'barsSession', 'barsAllSessions', 'icon']);
+const HUB_MODE_VALUES = new Set(['local', 'client', 'host']);
+const HUB_DEFAULT_PORT = 17321;
 
 let mainWindow = null;
 let settingsPath = null;
@@ -38,8 +41,16 @@ const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) app.exit(0);
 
 function defaultSettings() {
+  const envHubUrl = process.env.TOKEN_MONITOR_HUB_URL || '';
   return {
-    hubUrl: process.env.TOKEN_MONITOR_HUB_URL || '',
+    hubMode: envHubUrl ? 'client' : 'local',
+    hubUrl: envHubUrl,
+    hubHostPort: Math.max(1, Math.min(65535, Number(process.env.TOKEN_MONITOR_PORT) || HUB_DEFAULT_PORT)),
+    // Default to TOKEN_MONITOR_SECRET so agents that already trust this env
+    // value (matching what the CLI hub uses) can connect to the widget's
+    // embedded hub without a fresh round of credential sharing. Falls back
+    // to a random secret generated in startEmbeddedHub() if env is empty.
+    hubHostSecret: process.env.TOKEN_MONITOR_SECRET || '',
     secret: process.env.TOKEN_MONITOR_SECRET || '',
     alwaysOnTop: process.env.TOKEN_MONITOR_ALWAYS_ON_TOP !== '0',
     refreshMs: Number(process.env.TOKEN_MONITOR_WIDGET_REFRESH_MS || 15000),
@@ -68,6 +79,17 @@ function defaultSettings() {
 function normalizeTrayContent(value, fallback = 'tokens') {
   const v = String(value || '').trim();
   return TRAY_CONTENT_VALUES.has(v) ? v : fallback;
+}
+
+function normalizeHubMode(value, fallback = 'local') {
+  const v = String(value || '').trim();
+  return HUB_MODE_VALUES.has(v) ? v : fallback;
+}
+
+function normalizeHubPort(value, fallback = HUB_DEFAULT_PORT) {
+  const n = Math.floor(Number(value));
+  if (!Number.isFinite(n) || n < 1 || n > 65535) return fallback;
+  return n;
 }
 
 function clampZoom(value) {
@@ -149,7 +171,15 @@ function readSettings() {
     const defaults = defaultSettings();
     const saved = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
     if (!saved.secret && defaults.secret) delete saved.secret;
-    return { ...defaults, ...saved };
+    const merged = { ...defaults, ...saved };
+    // Migrate older configs that predate hubMode: infer from hubUrl.
+    if (saved.hubMode === undefined) {
+      merged.hubMode = (saved.hubUrl && String(saved.hubUrl).trim()) ? 'client' : 'local';
+    }
+    merged.hubMode = normalizeHubMode(merged.hubMode);
+    merged.hubHostPort = normalizeHubPort(merged.hubHostPort);
+    merged.hubHostSecret = typeof merged.hubHostSecret === 'string' ? merged.hubHostSecret : '';
+    return merged;
   }
   catch (_error) { return defaultSettings(); }
 }
@@ -244,6 +274,83 @@ function getDefaultTrayIcon() {
   return defaultTrayIcon;
 }
 const AGENT_PID_PATH = pidFilePath();
+let embeddedHub = null;
+let embeddedHubError = null;
+let modeQueue = Promise.resolve();
+
+function effectiveHubConfig() {
+  if (settings?.hubMode === 'host') {
+    return {
+      url: `http://127.0.0.1:${normalizeHubPort(settings.hubHostPort)}`,
+      secret: settings.hubHostSecret || ''
+    };
+  }
+  if (settings?.hubMode === 'client') {
+    const url = String(settings.hubUrl || '').trim();
+    return { url: url || null, secret: settings.secret || '' };
+  }
+  return { url: null, secret: '' };
+}
+
+function hubDataFile() {
+  return path.join(app.getPath('userData'), 'hub-devices.json');
+}
+
+function sendHubPush(payload) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    try { mainWindow.webContents.send('hub:push', payload); } catch (_) {}
+  }
+}
+
+function getHubInfo() {
+  const port = normalizeHubPort(settings?.hubHostPort);
+  return {
+    mode: settings?.hubMode || 'local',
+    port,
+    secret: settings?.hubHostSecret || '',
+    listening: Boolean(embeddedHub),
+    listeningPort: embeddedHub ? embeddedHub.port : null,
+    error: embeddedHubError,
+    lanAddresses: lanIpv4Addresses()
+  };
+}
+
+async function startEmbeddedHub() {
+  if (embeddedHub) return embeddedHub;
+  embeddedHubError = null;
+  if (!settings.hubHostSecret) {
+    settings.hubHostSecret = generateHubSecret();
+    saveSettings();
+  }
+  const port = normalizeHubPort(settings.hubHostPort);
+  try {
+    const hub = createHub({
+      port,
+      host: '0.0.0.0',
+      secret: settings.hubHostSecret,
+      dataFile: hubDataFile(),
+      logger: { error: (err) => console.log(`[hub] ${err?.message || err}`) }
+    });
+    await hub.start();
+    embeddedHub = { hub, port };
+    console.log(`[hub] listening on 0.0.0.0:${port}`);
+    sendHubPush({ type: 'listening', info: getHubInfo() });
+    return embeddedHub;
+  } catch (error) {
+    embeddedHubError = { code: error.code || 'error', message: error.message, port };
+    console.log(`[hub] failed to start on port ${port}: ${error.message}`);
+    sendHubPush({ type: 'error', info: getHubInfo() });
+    return null;
+  }
+}
+
+async function stopEmbeddedHub() {
+  if (!embeddedHub) return;
+  const handle = embeddedHub;
+  embeddedHub = null;
+  try { await handle.hub.stop(); } catch (_) {}
+  sendHubPush({ type: 'stopped', info: getHubInfo() });
+}
 
 function isExternalAgentActive() {
   try {
@@ -256,24 +363,28 @@ function isExternalAgentActive() {
 }
 
 async function deleteDeviceFromHub(deviceId) {
-  const base = String(settings.hubUrl).replace(/\/$/, '');
+  const { url: hubUrl, secret } = effectiveHubConfig();
+  if (!hubUrl) return;
+  const base = hubUrl.replace(/\/$/, '');
   const response = await fetch(`${base}/api/devices/${encodeURIComponent(deviceId)}`, {
     method: 'DELETE',
-    headers: settings.secret ? { authorization: `Bearer ${settings.secret}` } : {}
+    headers: secret ? { authorization: `Bearer ${secret}` } : {}
   });
   if (!response.ok && response.status !== 404) throw new Error(`DELETE ${response.status}`);
 }
 
 async function postToHub(summary) {
+  const { url: hubUrl, secret } = effectiveHubConfig();
+  if (!hubUrl) throw new Error('hub not configured');
   const stale = settings.lastPostedDeviceId;
   if (stale && stale !== summary.deviceId) {
     try { await deleteDeviceFromHub(stale); }
     catch (error) { console.log(`[sync] cleanup of old deviceId ${stale} failed: ${error.message}`); }
   }
-  const url = `${String(settings.hubUrl).replace(/\/$/, '')}/api/ingest`;
+  const url = `${hubUrl.replace(/\/$/, '')}/api/ingest`;
   const response = await fetch(url, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', ...(settings.secret ? { authorization: `Bearer ${settings.secret}` } : {}) },
+    headers: { 'content-type': 'application/json', ...(secret ? { authorization: `Bearer ${secret}` } : {}) },
     body: JSON.stringify(summary)
   });
   if (!response.ok) throw new Error(`Hub ${response.status}: ${(await response.text()).slice(0, 200)}`);
@@ -291,7 +402,7 @@ function stopSyncCollector() {
 
 function startSyncCollector() {
   stopSyncCollector();
-  if (!isHubConfigured()) return;
+  if (!effectiveHubConfig().url) return;
   syncCollectorHandle = startCollector({
     clients: settings.clients || 'claude,codex,hermes,opencode,openclaw,cursor',
     allTimeSince: settings.allTimeSince || '2024-01-01',
@@ -314,7 +425,7 @@ function startSyncCollector() {
 }
 
 function isHubConfigured() {
-  return Boolean(settings?.hubUrl && String(settings.hubUrl).trim());
+  return Boolean(effectiveHubConfig().url);
 }
 
 function sendPush(payload) {
@@ -410,14 +521,15 @@ function parseSseChunk(chunk) {
 
 async function startStatsStream() {
   stopStatsStream();
-  if (!isHubConfigured()) return;
+  const { url: hubUrl, secret } = effectiveHubConfig();
+  if (!hubUrl) return;
   mode = 'sync';
-  const url = `${String(settings.hubUrl).replace(/\/$/, '')}/api/stats/stream`;
+  const url = `${hubUrl.replace(/\/$/, '')}/api/stats/stream`;
   const controller = new AbortController();
   sseAbortController = controller;
   try {
     const response = await fetch(url, {
-      headers: { accept: 'text/event-stream', ...(settings.secret ? { authorization: `Bearer ${settings.secret}` } : {}) },
+      headers: { accept: 'text/event-stream', ...(secret ? { authorization: `Bearer ${secret}` } : {}) },
       signal: controller.signal
     });
     if (!response.ok || !response.body) {
@@ -538,15 +650,44 @@ function exitTrayMode() {
 }
 
 function startMode() {
-  if (isHubConfigured()) {
-    stopLocalCollector();
-    startStatsStream();
-    startSyncCollector();
-  } else {
-    stopStatsStream();
-    stopSyncCollector();
-    startLocalCollector();
-  }
+  // Tear down collectors synchronously so they can't double-run while the
+  // async reconciliation below is queued.
+  stopLocalCollector();
+  stopStatsStream();
+  stopSyncCollector();
+  // Serialize the hub-side work so rapid UI events (mode change immediately
+  // followed by a port edit or secret regenerate) reconcile in order rather
+  // than racing — otherwise an in-flight start could finish with the old
+  // port/secret after the UI already advertises the new ones.
+  modeQueue = modeQueue.then(async () => {
+    if (settings.hubMode === 'host') {
+      await stopEmbeddedHub();
+      const handle = await startEmbeddedHub();
+      if (settings.hubMode !== 'host') {
+        await stopEmbeddedHub();
+        return;
+      }
+      if (!handle) {
+        // Bind failed (e.g. EADDRINUSE). The error is already surfaced via
+        // hub:push; fall back to the local collector so the widget still
+        // shows data while the user fixes the port.
+        startLocalCollector();
+        return;
+      }
+      startStatsStream();
+      startSyncCollector();
+      return;
+    }
+    await stopEmbeddedHub();
+    if (effectiveHubConfig().url) {
+      startStatsStream();
+      startSyncCollector();
+    } else {
+      startLocalCollector();
+    }
+  }).catch((err) => {
+    console.log(`[mode] reconciliation failed: ${err?.message || err}`);
+  });
 }
 
 function stopAll() {
@@ -554,6 +695,7 @@ function stopAll() {
   stopLocalCollector();
   stopStatsStream();
   stopSyncCollector();
+  void stopEmbeddedHub();
   stopDiscordRpc();
   if (tray && !tray.isDestroyed()) tray.destroy();
   tray = null;
@@ -573,8 +715,10 @@ async function fetchStats() {
     if (localStats) return localStats;
     return aggregateDevices(localDevice ? [localDevice] : [], 0);
   }
-  const url = `${String(settings.hubUrl || '').replace(/\/$/, '')}/api/stats`;
-  const response = await fetch(url, { headers: settings.secret ? { authorization: `Bearer ${settings.secret}` } : {} });
+  const { url: hubUrl, secret } = effectiveHubConfig();
+  if (!hubUrl) return aggregateDevices([], 0);
+  const url = `${hubUrl.replace(/\/$/, '')}/api/stats`;
+  const response = await fetch(url, { headers: secret ? { authorization: `Bearer ${secret}` } : {} });
   if (!response.ok) throw new Error(`Hub ${response.status}: ${(await response.text()).slice(0, 200)}`);
   return response.json();
 }
@@ -751,6 +895,9 @@ app.whenReady().then(() => {
   ipcMain.handle('settings:get', () => settings);
   ipcMain.handle('settings:update', (_event, patch) => {
     const previousSystemGlass = settings.systemGlass;
+    const previousHubMode = settings.hubMode;
+    const previousHubHostPort = settings.hubHostPort;
+    const previousHubHostSecret = settings.hubHostSecret;
     const previousHubUrl = settings.hubUrl;
     const previousSecret = settings.secret;
     const previousDeviceId = settings.deviceId;
@@ -765,6 +912,9 @@ app.whenReady().then(() => {
     settings = {
       ...settings,
       ...patch,
+      hubMode: patch.hubMode !== undefined ? normalizeHubMode(patch.hubMode, settings.hubMode) : settings.hubMode,
+      hubHostPort: patch.hubHostPort !== undefined ? normalizeHubPort(patch.hubHostPort, settings.hubHostPort) : settings.hubHostPort,
+      hubHostSecret: patch.hubHostSecret !== undefined ? String(patch.hubHostSecret) : settings.hubHostSecret,
       deviceId: (patch.deviceId !== undefined ? String(patch.deviceId).trim() : settings.deviceId) || defaultDeviceId(),
       refreshMs: Math.max(5000, Number(patch.refreshMs ?? settings.refreshMs ?? 15000)),
       glassOpacity: Math.max(0, Math.min(100, Number(patch.glassOpacity ?? settings.glassOpacity ?? 68))),
@@ -797,6 +947,9 @@ app.whenReady().then(() => {
       applyNativeMaterial();
     }
     if (
+      settings.hubMode !== previousHubMode ||
+      settings.hubHostPort !== previousHubHostPort ||
+      settings.hubHostSecret !== previousHubHostSecret ||
       settings.hubUrl !== previousHubUrl ||
       settings.secret !== previousSecret ||
       settings.deviceId !== previousDeviceId ||
@@ -839,6 +992,13 @@ app.whenReady().then(() => {
   });
   ipcMain.handle('stats:get', () => fetchStats());
   ipcMain.handle('stream:status', () => ({ connected: streamConnected, mode }));
+  ipcMain.handle('hub:getInfo', () => getHubInfo());
+  ipcMain.handle('hub:regenerateSecret', () => {
+    settings.hubHostSecret = generateHubSecret();
+    saveSettings();
+    if (settings.hubMode === 'host') startMode();
+    return getHubInfo();
+  });
   ipcMain.handle('app:getInfo', () => ({
     version: app.getVersion(),
     platform: process.platform,

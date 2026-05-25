@@ -46,7 +46,7 @@ Most usage monitors are useful on the machine they run on. Token Monitor is buil
 - Appearance controls for glass opacity, blur, and transparent window mode
 - Menu bar (macOS) and system tray (Windows) popover with live cost, tokens, or closest Claude/Codex limit % next to the icon
 - Local-first: no servers needed for single-device use
-- Self-hosted sync backend (Node hub or Cloudflare Worker)
+- Self-hosted sync backend (in-widget hub, Node CLI hub, or Cloudflare Worker)
 - iOS widget support via Widgy and Scriptable through the Worker hub
 - Discord Rich Presence to broadcast today's tokens, cost, and top client (opt-in)
 - Privacy-first: only summary numbers ever leave your machine
@@ -85,9 +85,15 @@ npm start
 
 ### Multi-device sync
 
-Pick ONE hub backend that all your devices (and any headless agents) connect to. On each device, open the widget and fill in Settings → Multi-device Sync → Hub URL + Secret. The widget contributes this device's usage automatically; run `npm run agent` only on machines without a widget.
+Pick ONE hub backend that all your devices (and any headless agents) connect to. On each device, open the widget and pick a mode under Settings → Multi-device Sync. The widget contributes this device's usage automatically; run `npm run agent` only on machines without a widget.
 
-#### Option A — Self-hosted Node hub (same LAN)
+#### Option A — Host the hub from the widget (easiest, no CLI)
+
+In the widget on one always-on machine, open Settings → Multi-device Sync and pick **Host hub on this device**. The widget generates a random secret and lists the LAN URLs other devices can connect to (Tailscale or ZeroTier addresses appear here too). On every other device, pick **Connect to a hub** and paste the URL + secret.
+
+The hub runs while Token Monitor is running — quitting (not just closing the window) stops it for all connected devices.
+
+#### Option B — Self-hosted Node hub (always-on headless machine)
 
 ```bash
 # on the always-on machine
@@ -96,7 +102,7 @@ cp .env.example .env
 npm run hub
 ```
 
-#### Option B — Cloudflare Worker hub (across networks, including iPhone)
+#### Option C — Cloudflare Worker hub (across networks, including iPhone)
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Javis603/token-monitor/tree/main/worker)
 
@@ -135,7 +141,7 @@ Mode B — Sync (opt-in, multi-device)
     device C agent ──▶
 ```
 
-The widget switches modes automatically based on whether a Hub URL is set in settings. There is no separate "mode" toggle. In sync mode the hub pushes aggregated stats to every connected widget over Server-Sent Events, so updates on one device appear on the others within a few seconds.
+The widget chooses local vs sync mode based on Settings → Multi-device Sync. The hub itself can run as a separate `npm run hub` process, a Cloudflare Worker, or directly inside one of the widgets (Host mode). In sync mode the hub pushes aggregated stats to every connected widget over Server-Sent Events, so updates on one device appear on the others within a few seconds.
 
 ## Settings
 
@@ -143,7 +149,7 @@ The widget switches modes automatically based on whether a Hub URL is set in set
 
 Click the `⚙` button in the widget header to open the Settings panel.
 
-- **Multi-device Sync** — Hub URL and secret. Leave Hub URL empty to run in local mode (this device only).
+- **Multi-device Sync** — three modes: **Local only** (this device, no hub), **Connect to a hub** (paste another machine's Hub URL + secret), or **Host hub on this device** (open a hub here so other devices can connect; LAN/Tailscale/ZeroTier addresses are listed for you).
 - **Tracked Tools** — checkboxes for each supported AI tool. Toggles take effect immediately and restart the collector with the new client list.
 - **AI Tool Limits** — choose Claude Code and Codex limit detection and refresh frequency.
 - **Display Mode** — switch to a menu bar (macOS) or system tray (Windows) popover instead of the floating window, and choose what shows next to the icon: cost, today's tokens, total tokens, cost + tokens, the closest Claude/Codex limit % left, or icon-only.

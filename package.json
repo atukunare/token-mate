@@ -29,6 +29,7 @@
     "files": [
       "src/electron/**/*",
       "src/shared/**/*",
+      "src/hub/**/*",
       "assets/icon.png",
       "assets/icons/**/*",
       "package.json"

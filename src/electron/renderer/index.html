@@ -32,9 +32,38 @@
       <section id="settingsPanel" class="settings-panel hidden">
         <div class="settings-group">
           <div class="settings-group-header"><span>Multi-device Sync</span></div>
-          <p class="settings-note">Leave empty to run in local mode (this device only).</p>
-          <label>Hub URL<input id="hubUrlInput" type="text" spellcheck="false" placeholder="http://hub-host:17321" /></label>
-          <label>Secret<input id="secretInput" type="password" spellcheck="false" placeholder="optional shared secret" /></label>
+          <div id="hubModeOptions" class="hub-mode-options" role="radiogroup">
+            <label class="hub-mode-option">
+              <input type="radio" name="hubMode" value="local" />
+              <div class="hub-mode-text"><strong>Local only</strong><span>This device only.</span></div>
+            </label>
+            <label class="hub-mode-option">
+              <input type="radio" name="hubMode" value="client" />
+              <div class="hub-mode-text"><strong>Connect to a hub</strong><span>Send this device's usage to a hub elsewhere.</span></div>
+            </label>
+            <label class="hub-mode-option">
+              <input type="radio" name="hubMode" value="host" />
+              <div class="hub-mode-text"><strong>Host hub on this device</strong><span>Open a hub here so other devices can connect.</span></div>
+            </label>
+          </div>
+          <div id="hubClientFields" class="hub-mode-fields hidden">
+            <label>Hub URL<input id="hubUrlInput" type="text" spellcheck="false" placeholder="http://hub-host:17321" /></label>
+            <label>Secret<input id="secretInput" type="password" spellcheck="false" placeholder="optional shared secret" /></label>
+          </div>
+          <div id="hubHostFields" class="hub-mode-fields hidden">
+            <label>Port<input id="hubPortInput" type="number" min="1" max="65535" spellcheck="false" /></label>
+            <label>Shared Secret
+              <div class="hub-secret-row">
+                <input id="hubSecretInput" type="text" spellcheck="false" readonly />
+                <button id="hubSecretCopyButton" type="button" class="icon-button" title="Copy secret">⧉</button>
+                <button id="hubSecretRegenButton" type="button" class="icon-button" title="Regenerate">↺</button>
+              </div>
+            </label>
+            <div id="hubStatusRow" class="hub-status"></div>
+            <div id="hubAddressList" class="hub-address-list"></div>
+            <p class="settings-note">Other devices connect using one of the URLs above with the shared secret. macOS / Windows may prompt to allow incoming connections the first time. For cross-network use, run Tailscale or ZeroTier on both sides — the virtual IP works the same.</p>
+            <p class="settings-note hub-warning">The hub runs while Token Monitor is running. Quitting (not just closing the window) stops the hub for all connected devices.</p>
+          </div>
           <label>Device ID<input id="deviceIdInput" type="text" spellcheck="false" placeholder="auto (hostname)" /></label>
           <div class="settings-actions">
             <button id="saveSettingsButton">Save</button>
