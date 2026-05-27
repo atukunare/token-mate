@@ -137,9 +137,29 @@ async function maybeSyncCursor(clientsCsv, logger) {
   }
 }
 
+async function maybeSyncAntigravity(clientsCsv, logger) {
+  const enabled = new Set(String(clientsCsv || '').split(',').map((v) => v.trim().toLowerCase()));
+  if (!enabled.has('antigravity')) return;
+  const { bin, prefixArgs, env } = tokscaleCommand();
+  await new Promise((resolve) => {
+    const child = spawn(bin, [...prefixArgs, 'antigravity', 'sync'], { env, windowsHide: true });
+    let stderr = '';
+    const timer = setTimeout(() => { child.kill('SIGTERM'); resolve(); }, 30000);
+    child.stderr.on('data', (chunk) => { stderr += chunk.toString(); });
+    child.on('error', () => { clearTimeout(timer); resolve(); });
+    child.on('close', (code) => {
+      clearTimeout(timer);
+      if (code !== 0 && typeof logger === 'function') logger(`antigravity sync exited ${code}: ${stderr.trim().slice(0, 200)}`);
+      resolve();
+    });
+    child.stdin?.end();
+  });
+}
+
 async function collectUsageOnce(options) {
   const { clients, allTimeSince, commandTimeoutMs, deviceId, agentVersion = '0.1.0' } = options;
   await maybeSyncCursor(clients, options.logger);
+  await maybeSyncAntigravity(clients, options.logger);
   const todayJson = await runTokscale({ clients, flags: ['--today'], commandTimeoutMs });
   const monthJson = await runTokscale({ clients, flags: ['--month'], commandTimeoutMs });
   const allTimeJson = await runTokscale({ clients, flags: ['--since', allTimeSince], commandTimeoutMs });
@@ -183,6 +203,9 @@ function watchPathsForClients(clientsCsv) {
   }
   if (enabled.has('cursor')) {
     candidates.push(path.join(home, '.config', 'tokscale', 'cursor-cache'));
+  }
+  if (enabled.has('antigravity')) {
+    candidates.push(path.join(home, '.config', 'tokscale', 'antigravity-cache'));
   }
   return candidates.filter((candidate) => { try { return fs.statSync(candidate).isDirectory(); } catch (_) { return false; } });
 }

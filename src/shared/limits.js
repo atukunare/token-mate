@@ -1,7 +1,7 @@
 'use strict';
 
 const DEFAULT_LIMITS_REFRESH_MS = 5 * 60 * 1000;
-const VALID_PROVIDERS = new Set(['claude', 'codex', 'cursor']);
+const VALID_PROVIDERS = new Set(['claude', 'codex', 'cursor', 'antigravity']);
 const VALID_STATUSES = new Set(['ok', 'disabled', 'notConfigured', 'unauthorized', 'rateLimited', 'sourceRateLimited', 'unavailable', 'error']);
 const VALID_SOURCES = new Set(['oauth', 'cli', 'web', 'rpc']);
 const WINDOW_ORDER = ['session', 'weekly', 'billing'];

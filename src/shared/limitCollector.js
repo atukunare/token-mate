@@ -8,8 +8,9 @@ const path = require('node:path');
 const { DEFAULT_LIMITS_REFRESH_MS, normalizeLimitProvider, normalizeLimitsSummary } = require('./limits');
 const cursorAuth = require('./cursorAuth');
 const cursorProbe = require('./cursorProbe');
+const antigravityProbe = require('./antigravityProbe');
 
-const LIMIT_PROVIDER_IDS = ['claude', 'codex', 'cursor'];
+const LIMIT_PROVIDER_IDS = ['claude', 'codex', 'cursor', 'antigravity'];
 const LIMIT_REFRESH_VALUES = new Set([60_000, 120_000, 300_000, 900_000, 1_800_000]);
 const CLAUDE_USAGE_URL = 'https://api.anthropic.com/api/oauth/usage';
 const CLAUDE_OAUTH_TOKEN_URL = 'https://console.anthropic.com/v1/oauth/token';
@@ -32,7 +33,7 @@ function parseBoolean(value, fallback = true) {
 function parseLimitProviders(value) {
   const isEmpty = value === undefined || value === null || value === ''
     || (Array.isArray(value) && value.length === 0);
-  const source = isEmpty ? 'claude,codex,cursor' : value;
+  const source = isEmpty ? 'claude,codex,cursor,antigravity' : value;
   const raw = Array.isArray(source) ? source : String(source).split(',');
   const seen = new Set();
   const providers = [];
@@ -1037,6 +1038,43 @@ async function fetchCodexLimits(options = {}, deps = {}) {
   });
 }
 
+async function fetchAntigravityLimits(options = {}, deps = {}) {
+  const nowMs = (deps.now || Date.now)();
+  const updatedAt = nowIso(nowMs);
+  const probeFn = deps.antigravityProbe || antigravityProbe.probe;
+  try {
+    const snapshot = await probeFn(deps);
+    const accountLabel = snapshot.accountPlan ? planLabelFromParts(snapshot.accountPlan) : '';
+    const accountKeySeed = snapshot.accountEmail || snapshot.accountPlan || 'default';
+    const windows = (snapshot.pools || []).map((pool) => ({
+      kind: 'weekly',
+      label: pool.name,
+      usedPercent: Math.max(0, Math.min(100, (1 - pool.remainingFraction) * 100)),
+      resetsAt: pool.resetTime || null,
+      windowMinutes: null
+    }));
+    return normalizeLimitProvider({
+      provider: 'antigravity',
+      accountKey: hashKey('antigravity', accountKeySeed),
+      accountLabel,
+      source: 'rpc',
+      status: 'ok',
+      updatedAt,
+      windows
+    });
+  } catch (err) {
+    return normalizeLimitProvider({
+      provider: 'antigravity',
+      accountKey: '',
+      accountLabel: '',
+      source: 'rpc',
+      status: providerStatusFromError(err),
+      updatedAt,
+      windows: []
+    });
+  }
+}
+
 function providerStatusFromError(error) {
   if (['disabled', 'notConfigured', 'unauthorized', 'rateLimited', 'sourceRateLimited', 'unavailable', 'error'].includes(error?.status)) return error.status;
   if (error?.code === 'ENOENT') return 'notConfigured';
@@ -1057,6 +1095,7 @@ async function collectLimitsOnce(options = {}, deps = {}) {
     claude: (providerOptions) => fetchClaudeLimits(providerOptions, deps),
     codex: (providerOptions) => fetchCodexLimits(providerOptions, deps),
     cursor: (providerOptions) => fetchCursorLimits(providerOptions, deps),
+    antigravity: (providerOptions) => fetchAntigravityLimits(providerOptions, deps),
     ...(deps.providerFetchers || {})
   };
   const providers = [];
@@ -1267,6 +1306,7 @@ module.exports = {
   collectLimitsOnce,
   codexCommandCandidates,
   createLimitsCollector,
+  fetchAntigravityLimits,
   fetchClaudeLimits,
   fetchCodexLimits,
   fetchCursorLimits,

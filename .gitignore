@@ -6,6 +6,7 @@ dist/
 CLAUDE.md
 AGENTS.md
 docs/superpowers/
+.codegraph/
 .env
 .env.*
 !.env.example

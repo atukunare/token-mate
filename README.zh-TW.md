@@ -26,7 +26,7 @@
 
 ## 什麼是 Token Monitor？
 
-一款桌面小工具，即時顯示你各種 AI 編程工具——Claude Code、Codex、Hermes、OpenCode、OpenClaw、Cursor 等——的 Token 用量與 AI 工具用量上限，並支援依工具、裝置、模型分項顯示。
+一款桌面小工具，即時顯示你各種 AI 編程工具——Claude Code、Codex、Hermes、OpenCode、OpenClaw、Cursor、Antigravity 等——的 Token 用量與 AI 工具用量上限，並支援依工具、裝置、模型分項顯示。
 
 預設完全在你自己的機器上執行。可選擇加上 hub，數秒內同步多台 Mac、Windows PC、無頭代理與 iPhone 小工具的 Token 變化。
 
@@ -38,13 +38,13 @@
 
 ## 功能特色
 
-- Claude Code、Codex、Hermes、OpenCode、OpenClaw、Cursor 的即時 Token 追蹤（每輪對話後 UI 在數秒內更新）
+- Claude Code、Codex、Hermes、OpenCode、OpenClaw、Cursor、Antigravity 的即時 Token 追蹤（每輪對話後 UI 在數秒內更新）
 - 透過 Server-Sent Events 即時同步多裝置 Token
 - 依工具、裝置、模型或帳戶用量上限分組的統計檢視
 - Token 數量旁附帶成本分項
-- Claude Code、Codex 與 Cursor 的用量上限偵測，涵蓋 session、每週、帳單與 credits 視窗
+- Claude Code、Codex、Cursor 與 Antigravity 的用量上限偵測，涵蓋 session、每週、帳單與 credits 視窗
 - 外觀控制：玻璃透明度、模糊度、完全透明視窗
-- 選單列（macOS）與系統匣（Windows）彈出視窗，圖示旁可顯示成本、token 數，或 Claude／Codex／Cursor 最接近用完的用量上限百分比
+- 選單列（macOS）與系統匣（Windows）彈出視窗，圖示旁可顯示成本、token 數，或 Claude／Codex／Cursor／Antigravity 最接近用完的用量上限百分比
 - 本地優先：單裝置使用完全不需伺服器
 - 自架同步後端（小工具內 hub、Node CLI hub 或 Cloudflare Worker）
 - 透過 Worker hub 支援 iOS 小工具（Widgy、Scriptable）
@@ -71,6 +71,7 @@ Token Monitor 對「Token 用量」與「帳戶用量上限」分別支援：
 | <img src=".github/assets/tools-icon/hermes-agent.png" width="28" alt="Hermes" /> | Hermes | `$HERMES_HOME` 或 `~/.hermes/` | ✅ | — |
 | <img src=".github/assets/tools-icon/openclaw.png" width="28" alt="OpenClaw" /> | OpenClaw | `~/.openclaw/agents/` | ✅ | — |
 | <img src=".github/assets/tools-icon/cursor.png" width="28" alt="Cursor" /> | Cursor | `~/.config/tokscale/cursor-cache/`（由 Cursor 同步保持更新） | ✅ | ✅ |
+| <img src="assets/icons/antigravity.svg" width="28" alt="Antigravity" /> | Antigravity | `~/.config/tokscale/antigravity-cache/`（由 Antigravity 同步保持更新） | ✅ | ✅ |
 
 ## 安裝
 
@@ -151,8 +152,8 @@ App 狀態存在 OS 使用者資料目錄——解除安裝時一併刪除該資
 
 - **多裝置同步**——三種模式：**Local only**（僅本機，無 hub）、**Connect to a hub**（貼入其他機器的 Hub URL + secret）、**Host hub on this device**（在本機開 hub 供其他裝置連入；面板會列出可用的區網 / Tailscale / ZeroTier 位址）。
 - **追蹤的工具**——各支援 AI 工具的勾選框。切換立即生效，並會用新的客戶端清單重啟收集器。
-- **AI 工具用量上限**——選擇 Claude Code、Codex 與 Cursor 的用量上限偵測與更新頻率。
-- **顯示模式**——可將浮動視窗改為 macOS 選單列或 Windows 系統匣的彈出視窗，並選擇圖示旁顯示的內容：成本、今日 token 數、累計 token 數、成本＋token、最接近用完的 Claude／Codex／Cursor 用量上限百分比，或只顯示圖示。
+- **AI 工具用量上限**——選擇 Claude Code、Codex、Cursor 與 Antigravity 的用量上限偵測與更新頻率。
+- **顯示模式**——可將浮動視窗改為 macOS 選單列或 Windows 系統匣的彈出視窗，並選擇圖示旁顯示的內容：成本、今日 token 數、累計 token 數、成本＋token、最接近用完的 Claude／Codex／Cursor／Antigravity 用量上限百分比，或只顯示圖示。
 - **外觀**——系統玻璃、即時點、工具圖示、Discord Rich Presence、玻璃透明度、玻璃模糊度。
 - **進階**——開啟底層 `settings.json` 來調整較少用的選項，例如 `allTimeSince`。
 
@@ -168,7 +169,7 @@ TOKEN_MONITOR_SECRET=                # 共用 secret，必須與 hub 一致
 TOKEN_MONITOR_DEVICE_ID=             # 選填——預設為主機名稱
 TOKEN_MONITOR_CLIENTS=               # 選填——預設為所有支援的工具
 TOKEN_MONITOR_LIMITS_ENABLED=        # 選填——預設啟用；設為 0 可跳過 CLI 探測
-TOKEN_MONITOR_LIMIT_PROVIDERS=       # 選填——預設為所有支援的供應商（claude、codex、cursor）
+TOKEN_MONITOR_LIMIT_PROVIDERS=       # 選填——預設為所有支援的供應商（claude、codex、cursor、antigravity）
 ```
 
 小工具會把同樣的環境變數讀作首次啟動的預設值，之後改由 GUI 設定接手。
@@ -189,7 +190,7 @@ hub 與代理只傳輸摘要欄位：
 - 每個時段的 Token 總數（今日 / 本月 / 全部）
 - 成本總額（若 `tokscale` 回傳成本資料）
 - 依客戶端與模型的分項統計
-- 啟用 AI 工具用量上限時，正規化後的 Claude Code／Codex／Cursor 用量狀態
+- 啟用 AI 工具用量上限時，正規化後的 Claude Code／Codex／Cursor／Antigravity 用量狀態
 
 完全不會傳輸原始 AI 紀錄、提示詞、原始碼或對話內容。也不會傳輸 OAuth 憑證、存取權杖、刷新權杖、電子郵件或供應商原始回應。`.env`、`data/`、`node_modules/` 已加入 gitignore。
 

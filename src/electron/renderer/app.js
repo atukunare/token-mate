@@ -6,6 +6,7 @@ const clientColors = {
   codex: '#49a3b0',
   hermes: '#d4af37',
   gemini: '#4992ea',
+  antigravity: '#4285f4',
   deepseek: '#3982ff',
   cursor: '#000000',
   opencode: '#24292e',
@@ -22,7 +23,7 @@ const clientColors = {
   default: '#6ab4f0'
 };
 const clientsWithIcon = new Set([
-  'claude', 'codex', 'gemini', 'cursor', 'opencode', 'openclaw', 'hermes',
+  'claude', 'codex', 'gemini', 'cursor', 'opencode', 'openclaw', 'hermes', 'antigravity',
   'xai', 'deepseek', 'meta', 'mistral', 'qwen', 'moonshot', 'zai', 'cohere', 'xiaomi', 'minimax'
 ]);
 
@@ -57,12 +58,14 @@ const KNOWN_CLIENTS = [
   { id: 'hermes', label: 'Hermes' },
   { id: 'opencode', label: 'OpenCode' },
   { id: 'openclaw', label: 'OpenClaw' },
-  { id: 'cursor', label: 'Cursor' }
+  { id: 'cursor', label: 'Cursor' },
+  { id: 'antigravity', label: 'Antigravity' }
 ];
 const LIMIT_PROVIDERS = [
   { id: 'claude', label: 'Claude', settingsLabel: 'Claude Code' },
   { id: 'codex', label: 'Codex' },
-  { id: 'cursor', label: 'Cursor' }
+  { id: 'cursor', label: 'Cursor' },
+  { id: 'antigravity', label: 'Antigravity' }
 ];
 const DEFAULT_LIMIT_PROVIDER_ORDER = LIMIT_PROVIDERS.map((provider) => provider.id).join(',');
 const LIMIT_REFRESH_OPTIONS = [60000, 120000, 300000, 900000, 1800000];
@@ -641,6 +644,15 @@ function renderLimits() {
       const visibleWindows = billingWindows.length > 0 ? billingWindows : [null];
       for (const billing of visibleWindows) {
         const node = limitWindowNode('Billing cycle', billing, color, 0.68);
+        node.classList.add('limit-window-wide');
+        windows.append(node);
+      }
+    } else if (provider.provider === 'antigravity') {
+      windows.classList.add('limit-windows-antigravity');
+      const weeklyWindows = windowsForKind(provider, 'weekly');
+      const visibleWindows = weeklyWindows.length > 0 ? weeklyWindows : [null];
+      for (const weekly of visibleWindows) {
+        const node = limitWindowNode(weekly?.label || 'Weekly', weekly, color, 0.78);
         node.classList.add('limit-window-wide');
         windows.append(node);
       }

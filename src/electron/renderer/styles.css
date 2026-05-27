@@ -523,6 +523,7 @@ input, textarea, [contenteditable="true"] {
 .row-icon-hermes     { -webkit-mask-image: url(../../../assets/icons/hermes-agent.svg);  mask-image: url(../../../assets/icons/hermes-agent.svg); }
 .row-icon-gemini     { -webkit-mask-image: url(../../../assets/icons/gemini.svg);        mask-image: url(../../../assets/icons/gemini.svg); }
 .row-icon-cursor     { -webkit-mask-image: url(../../../assets/icons/cursor.svg);        mask-image: url(../../../assets/icons/cursor.svg); }
+.row-icon-antigravity { -webkit-mask-image: url(../../../assets/icons/antigravity.svg);   mask-image: url(../../../assets/icons/antigravity.svg); }
 .row-icon-opencode   { -webkit-mask-image: url(../../../assets/icons/opencode.svg);      mask-image: url(../../../assets/icons/opencode.svg); }
 .row-icon-openclaw   { -webkit-mask-image: url(../../../assets/icons/openclaw.svg);      mask-image: url(../../../assets/icons/openclaw.svg); }
 .row-icon-deepseek   { -webkit-mask-image: url(../../../assets/icons/deepseek.svg);      mask-image: url(../../../assets/icons/deepseek.svg); }
@@ -562,6 +563,10 @@ input, textarea, [contenteditable="true"] {
 .limit-icon-cursor {
   -webkit-mask-image: url(../../../assets/icons/cursor.svg);
   mask-image: url(../../../assets/icons/cursor.svg);
+}
+.limit-icon-antigravity {
+  -webkit-mask-image: url(../../../assets/icons/antigravity.svg);
+  mask-image: url(../../../assets/icons/antigravity.svg);
 }
 .row-name span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .row-metrics { display: grid; flex: 0 0 auto; gap: 2px; text-align: right; }

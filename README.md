@@ -26,7 +26,7 @@
 
 ## What is Token Monitor?
 
-A desktop widget that shows live token usage and AI Tool Limits across your AI coding tools — Claude Code, Codex, Hermes, OpenCode, OpenClaw, Cursor, and more — with breakdowns by tool, device, and model.
+A desktop widget that shows live token usage and AI Tool Limits across your AI coding tools — Claude Code, Codex, Hermes, OpenCode, OpenClaw, Cursor, Antigravity, and more — with breakdowns by tool, device, and model.
 
 It runs entirely on your own machine by default. Add an optional hub to sync token changes from multiple Macs, Windows PCs, headless agents, and iPhone widgets in seconds.
 
@@ -38,13 +38,13 @@ Most usage monitors are useful on the machine they run on. Token Monitor is buil
 
 ## Features
 
-- Live token tracking for Claude Code, Codex, Hermes, OpenCode, OpenClaw, and Cursor (UI updates within seconds of each turn)
+- Live token tracking for Claude Code, Codex, Hermes, OpenCode, OpenClaw, Cursor, and Antigravity (UI updates within seconds of each turn)
 - Real-time multi-device token sync over Server-Sent Events
 - Breakdown views grouped by tool, device, model, or account limits
 - Cost breakdown alongside token counts
-- Claude Code, Codex, and Cursor limit detection with session, weekly, billing, and credits windows
+- Claude Code, Codex, Cursor, and Antigravity limit detection with session, weekly, billing, and credits windows
 - Appearance controls for glass opacity, blur, and transparent window mode
-- Menu bar (macOS) and system tray (Windows) popover with live cost, tokens, or closest Claude/Codex/Cursor limit % next to the icon
+- Menu bar (macOS) and system tray (Windows) popover with live cost, tokens, or closest Claude/Codex/Cursor/Antigravity limit % next to the icon
 - Local-first: no servers needed for single-device use
 - Self-hosted sync backend (in-widget hub, Node CLI hub, or Cloudflare Worker)
 - iOS widget support via Widgy and Scriptable through the Worker hub
@@ -71,6 +71,7 @@ Token Monitor supports token usage and account-limit checks separately:
 | <img src=".github/assets/tools-icon/hermes-agent.png" width="28" alt="Hermes" /> | Hermes | `$HERMES_HOME` or `~/.hermes/` | ✅ | — |
 | <img src=".github/assets/tools-icon/openclaw.png" width="28" alt="OpenClaw" /> | OpenClaw | `~/.openclaw/agents/` | ✅ | — |
 | <img src=".github/assets/tools-icon/cursor.png" width="28" alt="Cursor" /> | Cursor | `~/.config/tokscale/cursor-cache/` (kept fresh by Cursor sync) | ✅ | ✅ |
+| <img src="assets/icons/antigravity.svg" width="28" alt="Antigravity" /> | Antigravity | `~/.config/tokscale/antigravity-cache/` (kept fresh by Antigravity sync) | ✅ | ✅ |
 
 ## Installation
 
@@ -151,8 +152,8 @@ Click the `⚙` button in the widget header to open the Settings panel.
 
 - **Multi-device Sync** — three modes: **Local only** (this device, no hub), **Connect to a hub** (paste another machine's Hub URL + secret), or **Host hub on this device** (open a hub here so other devices can connect; LAN/Tailscale/ZeroTier addresses are listed for you).
 - **Tracked Tools** — checkboxes for each supported AI tool. Toggles take effect immediately and restart the collector with the new client list.
-- **AI Tool Limits** — choose Claude Code, Codex, and Cursor limit detection and refresh frequency.
-- **Display Mode** — switch to a menu bar (macOS) or system tray (Windows) popover instead of the floating window, and choose what shows next to the icon: cost, today's tokens, total tokens, cost + tokens, the closest Claude/Codex/Cursor limit % left, or icon-only.
+- **AI Tool Limits** — choose Claude Code, Codex, Cursor, and Antigravity limit detection and refresh frequency.
+- **Display Mode** — switch to a menu bar (macOS) or system tray (Windows) popover instead of the floating window, and choose what shows next to the icon: cost, today's tokens, total tokens, cost + tokens, the closest Claude/Codex/Cursor/Antigravity limit % left, or icon-only.
 - **Appearance** — system glass, live dot, tool icons, Discord Rich Presence, glass opacity, and glass blur.
 - **Advanced** — opens the underlying `settings.json` for less-common options like `allTimeSince`.
 
@@ -168,7 +169,7 @@ TOKEN_MONITOR_SECRET=                # shared secret, must match the hub
 TOKEN_MONITOR_DEVICE_ID=             # optional — defaults to hostname
 TOKEN_MONITOR_CLIENTS=               # optional — defaults to all supported tools
 TOKEN_MONITOR_LIMITS_ENABLED=        # optional — defaults to enabled; set to 0 to skip CLI probing
-TOKEN_MONITOR_LIMIT_PROVIDERS=       # optional — defaults to all supported (claude, codex, cursor)
+TOKEN_MONITOR_LIMIT_PROVIDERS=       # optional — defaults to all supported (claude, codex, cursor, antigravity)
 ```
 
 The widget reads the same env vars as first-run defaults, then takes over with its own GUI-managed settings.
@@ -189,7 +190,7 @@ The hub and agent only transmit summary fields:
 - total tokens per period (today / month / all-time)
 - cost totals (when `tokscale` returns cost data)
 - per-client and per-model breakdowns
-- normalized Claude Code/Codex/Cursor limit status when AI Tool Limits is enabled
+- normalized Claude Code/Codex/Cursor/Antigravity limit status when AI Tool Limits is enabled
 
 They do not transmit raw AI logs, prompts, source code, or conversation
 content. They also do not transmit OAuth credentials, access tokens, refresh

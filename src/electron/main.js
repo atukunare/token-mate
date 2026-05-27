@@ -78,7 +78,7 @@ function defaultSettings() {
     discordRpcEnabled: false,
     deviceId: process.env.TOKEN_MONITOR_DEVICE_ID || defaultDeviceId(),
     lastPostedDeviceId: '',
-    clients: process.env.TOKEN_MONITOR_CLIENTS || 'claude,codex,hermes,opencode,openclaw,cursor',
+    clients: process.env.TOKEN_MONITOR_CLIENTS || 'claude,codex,hermes,opencode,openclaw,cursor,antigravity',
     allTimeSince: process.env.TOKEN_MONITOR_ALL_TIME_SINCE || '2024-01-01',
     limitsEnabled: parseBoolean(process.env.TOKEN_MONITOR_LIMITS_ENABLED, true),
     limitProviders: parseLimitProviders(process.env.TOKEN_MONITOR_LIMIT_PROVIDERS).join(','),
@@ -438,7 +438,7 @@ function startSyncCollector() {
   stopSyncCollector();
   if (!effectiveHubConfig().url) return;
   syncCollectorHandle = startCollector({
-    clients: settings.clients || 'claude,codex,hermes,opencode,openclaw,cursor',
+    clients: settings.clients || 'claude,codex,hermes,opencode,openclaw,cursor,antigravity',
     allTimeSince: settings.allTimeSince || '2024-01-01',
     commandTimeoutMs: 120 * 1000,
     deviceId: settings.deviceId || defaultDeviceId(),
@@ -505,7 +505,7 @@ function startLocalCollector() {
   mode = 'local';
   sendStatus(false, { reason: 'collecting' });
   localCollectorHandle = startCollector({
-    clients: settings.clients || 'claude,codex,hermes,opencode,openclaw,cursor',
+    clients: settings.clients || 'claude,codex,hermes,opencode,openclaw,cursor,antigravity',
     allTimeSince: settings.allTimeSince || '2024-01-01',
     commandTimeoutMs: 120 * 1000,
     deviceId: settings.deviceId || defaultDeviceId(),
