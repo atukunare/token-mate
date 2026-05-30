@@ -1050,8 +1050,8 @@ body.floating-bubble-collapsed-right .floating-bubble-tab {
 .session-detail.hidden { display: none; }
 .detail-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; }
 .detail-head.hidden { display: none; }
-.detail-back { background: transparent; border: 0; color: var(--muted, #8a8a90); font: inherit; cursor: pointer; padding: 2px 0; }
-.detail-sort { background: transparent; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; color: var(--muted, #8a8a90); font: inherit; font-size: 11px; cursor: pointer; padding: 2px 8px; }
+.detail-back { background: transparent; border: 0; color: var(--muted, #8a8a90); font: inherit; cursor: pointer; padding: 0; }
+.detail-sort { background: transparent; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; color: var(--muted, #8a8a90); font: inherit; font-size: 11px; cursor: pointer; padding: 2px 8px; margin-block: -4px; }
 .detail-note { color: var(--muted, #8a8a90); padding: 16px 4px; text-align: center; }
 .detail-exchange { border-bottom: 1px dashed rgba(255,255,255,0.08); padding: 6px 0; }
 .detail-exchange .bar { height: 3px; margin-left: 20px; width: auto; }
