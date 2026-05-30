@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 
 const probe = require('../../src/shared/antigravityProbe');
+const rootPackage = require('../../package.json');
 
 test('parseProcessLine extracts pid + csrf + extension port from a darwin ps line', () => {
   const line = '53602 /Applications/Antigravity.app/Contents/Resources/bin/language_server --standalone --override_ide_name antigravity --csrf_token ea1dbb2a-65a8-4766-a155-8e70f032f4ac --app_data_dir antigravity --extension_server_port 12345 --extension_server_csrf_token deadbeef';
@@ -120,6 +121,7 @@ test('callLs posts JSON, returns parsed body on 200', async () => {
     req.on('end', () => {
       assert.equal(req.headers['x-codeium-csrf-token'], 'tok');
       assert.equal(req.headers['content-type'], 'application/json');
+      assert.equal(req.headers['user-agent'], `token-monitor/${rootPackage.version} (+https://github.com/Javis603/token-monitor)`);
       assert.equal(JSON.parse(body).metadata.ideName, 'antigravity');
       res.writeHead(200, { 'content-type': 'application/json' });
       res.end(JSON.stringify({ ok: true }));

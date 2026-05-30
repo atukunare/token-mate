@@ -3,6 +3,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { defaultDeviceId, loadDotEnv, parseArgs, pidFilePath } = require('../shared/config');
+const { appVersion } = require('../shared/appVersion');
 const { clientsCsvForSetting } = require('../shared/clientTracking');
 const { collectUsageOnce, startCollector } = require('../shared/collector');
 const { normalizeLimitsRefreshMs, parseBoolean, parseLimitProviders } = require('../shared/limitCollector');
@@ -24,7 +25,7 @@ const limitsRefreshMs = normalizeLimitsRefreshMs(args.limitsRefreshMs || process
 const once = Boolean(args.once);
 const dryRun = Boolean(args['dry-run'] || args.dryRun);
 
-const collectorOptions = { clients, allTimeSince, commandTimeoutMs, deviceId, agentVersion: '0.1.0', limitsEnabled, limitProviders, limitsRefreshMs };
+const collectorOptions = { clients, allTimeSince, commandTimeoutMs, deviceId, agentVersion: appVersion(), agentRuntime: 'headless-agent', limitsEnabled, limitProviders, limitsRefreshMs };
 
 async function postUsage(summary) {
   const response = await fetch(`${hubUrl}/api/ingest`, {

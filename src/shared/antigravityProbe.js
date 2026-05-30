@@ -3,6 +3,7 @@
 const { spawn } = require('node:child_process');
 const https = require('node:https');
 const http = require('node:http');
+const { appVersion } = require('./appVersion');
 
 function errorWithStatus(status, message) {
   const error = new Error(message || status);
@@ -157,7 +158,7 @@ async function listeningPorts(pid, deps = {}) {
 }
 
 const LS_SERVICE = 'exa.language_server_pb.LanguageServerService';
-const USER_AGENT = 'token-monitor/0.1.0 (+https://github.com/Javis603/token-monitor)';
+const USER_AGENT = `token-monitor/${appVersion()} (+https://github.com/Javis603/token-monitor)`;
 
 function statusFromHttpCode(code) {
   if (code === 401 || code === 403) return 'unauthorized';

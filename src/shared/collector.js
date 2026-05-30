@@ -7,6 +7,7 @@ const path = require('node:path');
 const chokidar = require('chokidar');
 const semver = require('semver');
 const { readJson, sharedDataDir } = require('./config');
+const { appVersion } = require('./appVersion');
 const { normalizeClientsCsv } = require('./clientTracking');
 const { tokscalePackageNameForPlatform, tokscalePlatformKey } = require('./tokscalePlatform');
 const { emptyPeriod, extractUsageFromTokscale } = require('./usage');
@@ -158,7 +159,7 @@ async function maybeSyncAntigravity(clientsCsv, logger) {
 }
 
 async function collectUsageOnce(options) {
-  const { clients, allTimeSince, commandTimeoutMs, deviceId, agentVersion = '0.1.0' } = options;
+  const { clients, allTimeSince, commandTimeoutMs, deviceId, agentVersion = appVersion(), agentRuntime = '' } = options;
   const normalizedClients = normalizeClientsCsv(clients);
   let today = emptyPeriod();
   let month = emptyPeriod();
@@ -179,6 +180,7 @@ async function collectUsageOnce(options) {
     platform: `${process.platform}-${process.arch}`,
     updatedAt: new Date().toISOString(),
     agentVersion,
+    ...(agentRuntime ? { agentRuntime } : {}),
     trackedClients: normalizedClients ? normalizedClients.split(',') : [],
     today,
     month,
@@ -223,7 +225,7 @@ function watchPathsForClients(clientsCsv) {
 
 function startCollector(options) {
   const {
-    clients, allTimeSince, commandTimeoutMs, deviceId, agentVersion,
+    clients, allTimeSince, commandTimeoutMs, deviceId, agentVersion, agentRuntime,
     intervalMs, watchEnabled, watchDebounceMs, limitsEnabled,
     onUpdate, onError, logger
   } = options;
@@ -253,6 +255,7 @@ function startCollector(options) {
         commandTimeoutMs,
         deviceId,
         agentVersion,
+        agentRuntime,
         limitsCollector,
         forceLimits: Boolean(tickOptions.forceLimits)
       });

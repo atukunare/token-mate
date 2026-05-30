@@ -47,7 +47,8 @@ Example payload:
   "hostname": "macbook.local",
   "platform": "darwin-arm64",
   "updatedAt": "2026-05-18T00:00:00.000Z",
-  "agentVersion": "0.1.0",
+  "agentVersion": "0.3.0",
+  "agentRuntime": "headless-agent",
   "trackedClients": ["codex"],
   "today": {
     "totalTokens": 1234,

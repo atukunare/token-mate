@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { app, BrowserWindow, ipcMain, nativeImage, screen, session, shell } = require('electron');
 const { defaultDeviceId, generateHubSecret, lanIpv4Addresses, loadDotEnv, pidFilePath, sharedDataDir } = require('../shared/config');
+const { appVersion } = require('../shared/appVersion');
 const { DEFAULT_CLIENTS, clientsCsvForSetting } = require('../shared/clientTracking');
 const { startCollector } = require('../shared/collector');
 const { createHub } = require('../hub/server');
@@ -771,7 +772,8 @@ function startSyncCollector() {
     allTimeSince: settings.allTimeSince || '2024-01-01',
     commandTimeoutMs: 120 * 1000,
     deviceId: settings.deviceId || defaultDeviceId(),
-    agentVersion: '0.1.0-widget',
+    agentVersion: appVersion(),
+    agentRuntime: 'electron-widget',
     intervalMs: 5 * 60 * 1000,
     watchEnabled: true,
     watchDebounceMs: 1500,
@@ -848,7 +850,8 @@ function startLocalCollector() {
     allTimeSince: settings.allTimeSince || '2024-01-01',
     commandTimeoutMs: 120 * 1000,
     deviceId: settings.deviceId || defaultDeviceId(),
-    agentVersion: '0.1.0',
+    agentVersion: appVersion(),
+    agentRuntime: 'electron-widget',
     intervalMs: 5 * 60 * 1000,
     watchEnabled: true,
     watchDebounceMs: 1500,

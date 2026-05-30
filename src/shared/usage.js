@@ -245,6 +245,7 @@ function normalizeDeviceRecord(record) {
     updatedAt: record.updatedAt || nowIso,
     receivedAt: record.receivedAt || nowIso,
     agentVersion: record.agentVersion || '',
+    agentRuntime: record.agentRuntime ? String(record.agentRuntime) : '',
     periods: {},
     limits: normalizeLimitsSummary(record.limits)
   };
@@ -323,6 +324,8 @@ function aggregateDevices(devices, staleAfterMs, nowMs = Date.now()) {
       deviceId: normalized.deviceId,
       hostname: normalized.hostname,
       platform: normalized.platform,
+      agentVersion: normalized.agentVersion,
+      agentRuntime: normalized.agentRuntime,
       updatedAt: normalized.updatedAt,
       receivedAt: normalized.receivedAt,
       ageMs: Number.isFinite(ageMs) ? ageMs : null,
