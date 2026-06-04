@@ -299,7 +299,9 @@ test('extractUsageFromTokscale keeps session usage grouped by client and model',
   });
 
   const codex = period.sessions['codex:rollout-1'];
-  assert.equal(codex.totalTokens, 122);
+  // reasoning (2) is a subset of output (5), so it is NOT added to the total:
+  // entry 1 = 10 + 5 + 100 = 115, entry 2 = 2 + 3 = 5 → 120 (reasoning still tracked separately).
+  assert.equal(codex.totalTokens, 120);
   assert.equal(codex.costUsd, 0.3);
   assert.equal(codex.messageCount, 4);
   assert.equal(codex.inputTokens, 12);
@@ -307,9 +309,9 @@ test('extractUsageFromTokscale keeps session usage grouped by client and model',
   assert.equal(codex.cacheReadTokens, 100);
   assert.equal(codex.reasoningTokens, 2);
   assert.equal(codex.lastUsedAt, '2026-05-30T04:00:00.000Z');
-  assert.equal(codex.models['gpt-5'], 117);
+  assert.equal(codex.models['gpt-5'], 115);
   assert.equal(codex.models['gpt-4o'], 5);
-  assert.equal(codex.providers.openai, 122);
+  assert.equal(codex.providers.openai, 120);
   assert.equal(period.sessions['cursor:cursor-active'].models['cursor-auto'], 3);
 });
 

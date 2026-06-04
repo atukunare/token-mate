@@ -3,10 +3,13 @@
 const PERIODS = ['today', 'month', 'allTime'];
 const { aggregateLimits, normalizeLimitsSummary } = require('./limits');
 const TOKEN_KEYS = ['totalTokens', 'total_tokens', 'totalTokenCount', 'total_token_count', 'tokens', 'tokenCount', 'token_count'];
+// Additive components for a token total. `reasoning` is deliberately excluded: OpenAI/Codex report
+// reasoning_output_tokens WITHIN output_tokens (tokscale's `output` already includes it and exposes
+// `reasoning` only as informational metadata), so summing it would double-count. It is still tracked
+// separately via REASONING_TOKEN_KEYS for display.
 const TOKEN_COMPONENT_KEYS = [
   'input', 'inputTokens', 'input_tokens', 'promptTokens', 'prompt_tokens',
   'output', 'outputTokens', 'output_tokens', 'completionTokens', 'completion_tokens',
-  'reasoning', 'reasoningTokens', 'reasoning_tokens',
   'cacheRead', 'cacheReadTokens', 'cache_read_tokens',
   'cacheWrite', 'cacheWriteTokens', 'cache_write_tokens',
   'cachedTokens', 'cached_tokens',
@@ -284,7 +287,7 @@ function normalizeSession(input, fallbackKey) {
   const session = emptySession(client, id);
   const components = sessionTokenComponents(input);
   Object.assign(session, components);
-  const componentTotal = components.inputTokens + components.outputTokens + components.cacheReadTokens + components.cacheWriteTokens + components.reasoningTokens;
+  const componentTotal = components.inputTokens + components.outputTokens + components.cacheReadTokens + components.cacheWriteTokens; // reasoning is a subset of output — see TOKEN_COMPONENT_KEYS
   session.totalTokens = Math.max(0, Math.round(asNumber(input.totalTokens ?? input.total_tokens ?? input.tokens ?? componentTotal)));
   session.costUsd = asNumber(input.costUsd ?? input.cost_usd ?? input.cost ?? 0);
   session.messageCount = Math.max(0, Math.round(firstNumber(input, MESSAGE_COUNT_KEYS)));

@@ -879,7 +879,10 @@ function turnNode(turn) {
   const el = document.createElement('div');
   el.className = 'detail-turn';
   const tk = turn.tokens || {};
-  const split = `in ${formatNumber(tk.input || 0)} · out ${formatNumber(tk.output || 0)} · cache ${formatNumber(tk.cacheRead || 0)}`
+  // "cache" folds cache reads + cache writes (Claude's cache_creation) into one bucket so the
+  // in/out/cache breakdown sums to the turn total; reason is an informational subset of out.
+  const cache = (tk.cacheRead || 0) + (tk.cacheWrite || 0);
+  const split = `in ${formatNumber(tk.input || 0)} · out ${formatNumber(tk.output || 0)} · cache ${formatNumber(cache)}`
     + (tk.reasoning ? ` · reason ${formatNumber(tk.reasoning)}` : '');
   el.innerHTML = '<div class="detail-turn-label"><span class="detail-turn-title"></span><span class="detail-turn-split"></span><span class="detail-turn-tools"></span></div>'
     + '<div class="detail-turn-metrics"><span class="detail-turn-value"></span><span class="detail-turn-cost"></span></div>';

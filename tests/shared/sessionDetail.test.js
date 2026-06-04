@@ -77,11 +77,14 @@ test('parseCodexTranscript marks a text+image user_message with an [image] prefi
 });
 
 test('parseCodexTranscript reads last_token_usage and attaches preceding tools', () => {
+  // Codex follows OpenAI's convention: input_tokens INCLUDES cached_input_tokens and output_tokens
+  // INCLUDES reasoning_output_tokens. The turn total must equal Codex's own total_tokens
+  // (input_tokens + output_tokens) — not the sum of overlapping fields.
   const lines = [
     JSON.stringify({ type: 'event_msg', timestamp: '2026-05-30T03:00:00.000Z', payload: { type: 'user_message', message: '修 bug' } }),
     JSON.stringify({ type: 'response_item', payload: { type: 'function_call', name: 'exec_command' } }),
-    JSON.stringify({ type: 'event_msg', timestamp: '2026-05-30T03:00:02.000Z', payload: { type: 'token_count', info: { last_token_usage: { input_tokens: 1000, cached_input_tokens: 4000, output_tokens: 200, reasoning_output_tokens: 50 }, total_token_usage: { total_tokens: 999 } } } }),
-    JSON.stringify({ type: 'event_msg', timestamp: '2026-05-30T03:00:05.000Z', payload: { type: 'token_count', info: { last_token_usage: { input_tokens: 1500, cached_input_tokens: 4500, output_tokens: 300, reasoning_output_tokens: 70 } } } })
+    JSON.stringify({ type: 'event_msg', timestamp: '2026-05-30T03:00:02.000Z', payload: { type: 'token_count', info: { last_token_usage: { input_tokens: 5000, cached_input_tokens: 4000, output_tokens: 200, reasoning_output_tokens: 50, total_tokens: 5200 }, total_token_usage: { total_tokens: 999 } } } }),
+    JSON.stringify({ type: 'event_msg', timestamp: '2026-05-30T03:00:05.000Z', payload: { type: 'token_count', info: { last_token_usage: { input_tokens: 6000, cached_input_tokens: 4500, output_tokens: 300, reasoning_output_tokens: 70, total_tokens: 6300 } } } })
   ].join('\n');
 
   const events = parseCodexTranscript(lines);
@@ -90,12 +93,47 @@ test('parseCodexTranscript reads last_token_usage and attaches preceding tools',
   assert.equal(events[0].kind, 'prompt');
   assert.equal(events[0].text, '修 bug');
   assert.equal(events[1].kind, 'turn');
-  assert.equal(events[1].tokens.total, 5250); // 1000+4000+200+50 — ignores total_token_usage
+  assert.equal(events[1].tokens.total, 5200); // input_tokens + output_tokens, = total_tokens
+  assert.equal(events[1].tokens.input, 1000); // input made disjoint from cache: 5000 - 4000
   assert.equal(events[1].tokens.cacheRead, 4000);
-  assert.equal(events[1].tokens.reasoning, 50);
+  assert.equal(events[1].tokens.output, 200); // output stays whole (includes reasoning)
+  assert.equal(events[1].tokens.reasoning, 50); // informational subset of output, not added
   assert.deepEqual(events[1].tools, ['exec_command']);
-  assert.equal(events[2].tokens.total, 6370);
+  assert.equal(events[2].tokens.total, 6300);
   assert.deepEqual(events[2].tools, []);
+});
+
+test('parseCodexTranscript skips session-start/empty token_count ticks', () => {
+  const lines = [
+    JSON.stringify({ type: 'event_msg', timestamp: '2026-05-30T03:00:00.000Z', payload: { type: 'user_message', message: 'go' } }),
+    JSON.stringify({ type: 'event_msg', timestamp: '2026-05-30T03:00:01.000Z', payload: { type: 'token_count', info: { last_token_usage: null } } }),
+    JSON.stringify({ type: 'event_msg', timestamp: '2026-05-30T03:00:02.000Z', payload: { type: 'token_count', info: { last_token_usage: { input_tokens: 0, cached_input_tokens: 0, output_tokens: 0, reasoning_output_tokens: 0, total_tokens: 0 } } } }),
+    JSON.stringify({ type: 'event_msg', timestamp: '2026-05-30T03:00:03.000Z', payload: { type: 'token_count', info: { last_token_usage: { input_tokens: 800, cached_input_tokens: 600, output_tokens: 20, reasoning_output_tokens: 0, total_tokens: 820 } } } })
+  ].join('\n');
+  const turns = parseCodexTranscript(lines).filter((e) => e.kind === 'turn');
+  assert.equal(turns.length, 1); // null tick + all-zero tick dropped, one real turn kept
+  assert.equal(turns[0].tokens.total, 820);
+});
+
+test('parseClaudeTranscript counts one reply once across content-block splits and resume replay', () => {
+  // One assistant API response is written as several content-block lines sharing message.id + usage;
+  // on resume the whole transcript is re-appended verbatim (same line uuids). Both must collapse.
+  const usage = { input_tokens: 100, output_tokens: 50, cache_read_input_tokens: 200, cache_creation_input_tokens: 10 };
+  const asst = (uuid, block) => JSON.stringify({ type: 'assistant', uuid, timestamp: '2026-05-31T20:53:00.000Z', message: { id: 'msg_AAA', usage, content: [block] } });
+  const user = JSON.stringify({ type: 'user', uuid: 'u1', timestamp: '2026-05-31T20:52:00.000Z', message: { content: '今天几号' } });
+  const reply = [
+    asst('a1', { type: 'thinking', thinking: 'x' }),
+    asst('a2', { type: 'text', text: '31' }),
+    asst('a3', { type: 'tool_use', name: 'exec_command' })
+  ];
+  const transcript = [user, ...reply, /* resume replay → */ user, ...reply].join('\n');
+
+  const events = parseClaudeTranscript(transcript);
+  assert.equal(events.filter((e) => e.kind === 'prompt').length, 1); // replayed prompt deduped by uuid
+  const turns = events.filter((e) => e.kind === 'turn');
+  assert.equal(turns.length, 1); // 6 lines (split ×2 from replay) → one reply
+  assert.equal(turns[0].tokens.total, 360); // 100 + 50 + 200 + 10
+  assert.deepEqual(turns[0].tools, ['exec_command']); // tool_use merged from a later block
 });
 
 const { groupEvents, filterExchangesByPeriod, distributeCost } = require('../../src/shared/sessionDetail');

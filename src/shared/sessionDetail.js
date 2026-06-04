@@ -9,7 +9,11 @@ function num(value) {
 }
 
 function makeTokens({ input = 0, output = 0, cacheRead = 0, cacheWrite = 0, reasoning = 0 }) {
-  const total = num(input) + num(output) + num(cacheRead) + num(cacheWrite) + num(reasoning);
+  // `reasoning` is a subset of `output` (OpenAI/Codex report reasoning_output_tokens within
+  // output_tokens), so it's informational only and must NOT be added to the total — that matches
+  // how tokscale totals the session (input + output + cacheRead + cacheWrite). For Claude reasoning
+  // is always 0, so this is a no-op there.
+  const total = num(input) + num(output) + num(cacheRead) + num(cacheWrite);
   return { input: num(input), output: num(output), cacheRead: num(cacheRead), cacheWrite: num(cacheWrite), reasoning: num(reasoning), total };
 }
 
@@ -67,11 +71,23 @@ function codexPromptText(raw) {
 
 function parseClaudeTranscript(text) {
   const events = [];
+  // Claude Code inflates a transcript two ways, both of which would otherwise multiply token counts:
+  //   1. Resume replay — on resume it re-appends prior transcript entries verbatim, copying their
+  //      line `uuid`. Skip any entry whose uuid we've already seen.
+  //   2. Content-block split — one assistant API response is written as one line per content block
+  //      (thinking, text, tool_use…), each repeating the SAME message.id and usage. Count that
+  //      usage once and merge the tool names so a single reply is one turn, not N.
+  const seenLineUuids = new Set();
+  const turnByMessageId = new Map();
   for (const line of String(text || '').split(/\r?\n/)) {
     const trimmed = line.trim();
     if (!trimmed) continue;
     let obj;
     try { obj = JSON.parse(trimmed); } catch (_) { continue; }
+    if (obj.uuid) {
+      if (seenLineUuids.has(obj.uuid)) continue;
+      seenLineUuids.add(obj.uuid);
+    }
     const message = obj.message || {};
     const timestamp = obj.timestamp || '';
     if (obj.type === 'assistant' && message.usage) {
@@ -79,18 +95,26 @@ function parseClaudeTranscript(text) {
       const tools = Array.isArray(message.content)
         ? message.content.filter((part) => part && part.type === 'tool_use').map((part) => part.name)
         : [];
-      events.push({
+      const id = message.id;
+      if (id && turnByMessageId.has(id)) {
+        const turn = turnByMessageId.get(id);
+        turn.tools = uniqueTools(turn.tools.concat(tools)); // merge tool_use from a later block of the same reply
+        continue;
+      }
+      const event = {
         kind: 'turn',
         timestamp,
         tokens: makeTokens({
           input: u.input_tokens,
-          output: u.output_tokens,
+          output: u.output_tokens, // Anthropic folds thinking into output_tokens; no separate reasoning field
           cacheRead: u.cache_read_input_tokens,
           cacheWrite: u.cache_creation_input_tokens,
           reasoning: 0
         }),
         tools: uniqueTools(tools)
-      });
+      };
+      if (id) turnByMessageId.set(id, event);
+      events.push(event);
     } else if (obj.type === 'user') {
       const promptText = claudePromptText(message.content);
       if (promptText === null) continue; // tool_result or unsupported shape — not a boundary
@@ -128,19 +152,22 @@ function parseCodexTranscript(text) {
       // empty + no image → degenerate user_message; skip so its turns fold into the real prompt
       if (label) events.push({ kind: 'prompt', timestamp: obj.timestamp || '', text: label });
     } else if (obj.type === 'event_msg' && payload.type === 'token_count') {
-      const u = (payload.info && payload.info.last_token_usage) || {};
-      events.push({
-        kind: 'turn',
-        timestamp: obj.timestamp || '',
-        tokens: makeTokens({
-          input: u.input_tokens,
-          output: u.output_tokens,
-          cacheRead: u.cached_input_tokens,
-          cacheWrite: 0,
-          reasoning: u.reasoning_output_tokens
-        }),
-        tools: uniqueTools(pendingTools)
+      const u = payload.info && payload.info.last_token_usage;
+      if (!u) continue; // session-start / idle tick with no turn usage — not a reply
+      // Codex follows OpenAI's convention: input_tokens INCLUDES cached_input_tokens and
+      // output_tokens INCLUDES reasoning_output_tokens. Make the input disjoint from cache (so
+      // in + out + cacheRead == total_tokens) and keep reasoning as an informational subset of
+      // output. Adding cache or reasoning on top would double-count (the original bug).
+      const cacheRead = num(u.cached_input_tokens);
+      const tokens = makeTokens({
+        input: Math.max(0, num(u.input_tokens) - cacheRead),
+        output: u.output_tokens,
+        cacheRead,
+        cacheWrite: 0,
+        reasoning: u.reasoning_output_tokens
       });
+      if (tokens.total === 0) { pendingTools = []; continue; } // empty bookkeeping tick — skip
+      events.push({ kind: 'turn', timestamp: obj.timestamp || '', tokens, tools: uniqueTools(pendingTools) });
       pendingTools = [];
     }
   }
