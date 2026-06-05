@@ -3,7 +3,7 @@
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { app, BrowserWindow, ipcMain, nativeImage, screen, session, shell } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain, nativeImage, screen, session, shell } = require('electron');
 const { defaultDeviceId, generateHubSecret, lanIpv4Addresses, loadDotEnv, pidFilePath, sharedDataDir } = require('../shared/config');
 const { appVersion } = require('../shared/appVersion');
 const { DEFAULT_CLIENTS, clientsCsvForSetting } = require('../shared/clientTracking');
@@ -39,6 +39,11 @@ const { readSessionDetail } = require('../shared/sessionDetail');
 const { startDiscordRpc, stopDiscordRpc, updateDiscordRpc } = require('./discordRpc');
 const { buildTrayIcon, createTray, formatTrayText, pickUsageTrayIconId, popoverBounds } = require('./tray');
 const { describeWindowBehavior, normalizeWindowBehaviorSettings } = require('./windowBehavior');
+const {
+  normalizeWindowToggleShortcut,
+  windowToggleShortcutAction,
+  windowToggleShortcutStatus
+} = require('./windowShortcut');
 const {
   FLOATING_BUBBLE_HANDLE_HEIGHT,
   FLOATING_BUBBLE_HANDLE_WIDTH,
@@ -138,6 +143,7 @@ function defaultSettings() {
     zoomFactor: 1,
     trayMode: false,
     trayContent: 'tokens',
+    windowToggleShortcut: '',
     currency: normalizeCurrency(process.env.TOKEN_MONITOR_CURRENCY || 'USD'),
     startAtLogin: false,
     language: 'auto',
@@ -536,6 +542,7 @@ function readSettings() {
     delete merged.edgeDrawerEnabled;
     merged.floatingBubbleTrigger = merged.floatingBubbleTrigger === 'hover' ? 'hover' : 'click';
     merged.floatingBubbleContent = normalizeTrayContent(merged.floatingBubbleContent, 'icon');
+    merged.windowToggleShortcut = normalizeWindowToggleShortcut(merged.windowToggleShortcut);
     return normalizeWindowBehaviorSettings(merged);
   }
   catch (_error) { return normalizeWindowBehaviorSettings(defaultSettings()); }
@@ -671,6 +678,8 @@ let tray = null;
 let latestStats = null;
 let suppressNextBlurHide = false;
 const providerTrayIcons = {};
+let registeredWindowToggleShortcut = '';
+let windowToggleShortcutRegistered = false;
 let defaultTrayIcon = null;
 let tokScaleNpmMetadata = null;
 let tokScaleUpdaterBusy = false;
@@ -1024,6 +1033,65 @@ function focusExistingWindow() {
   }
 }
 
+function currentWindowToggleShortcutStatus() {
+  const shortcut = normalizeWindowToggleShortcut(settings?.windowToggleShortcut);
+  const registered = windowToggleShortcutRegistered && registeredWindowToggleShortcut === shortcut;
+  return windowToggleShortcutStatus(shortcut, registered);
+}
+
+function settingsForRenderer() {
+  return {
+    ...settings,
+    windowToggleShortcutStatus: currentWindowToggleShortcutStatus()
+  };
+}
+
+function pushSettingsToRenderer() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  try { mainWindow.webContents.send('settings:push', settingsForRenderer()); } catch (_) {}
+}
+
+function unregisterWindowToggleShortcut() {
+  if (registeredWindowToggleShortcut) {
+    try { globalShortcut.unregister(registeredWindowToggleShortcut); } catch (_) {}
+  }
+  registeredWindowToggleShortcut = '';
+  windowToggleShortcutRegistered = false;
+}
+
+function handleWindowToggleShortcut() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  const action = windowToggleShortcutAction({
+    trayMode: Boolean(settings?.trayMode),
+    floatingBubbleCollapsed: Boolean(floatingBubbleState.collapsed),
+    visible: mainWindow.isVisible(),
+    minimized: typeof mainWindow.isMinimized === 'function' ? mainWindow.isMinimized() : false
+  });
+  if (action === 'togglePopover') togglePopover();
+  else if (action === 'expandFloatingBubble') expandFloatingBubble();
+  else if (action === 'hideWindow') mainWindow.hide();
+  else focusExistingWindow();
+}
+
+function configureWindowToggleShortcut() {
+  unregisterWindowToggleShortcut();
+  const shortcut = normalizeWindowToggleShortcut(settings?.windowToggleShortcut);
+  settings.windowToggleShortcut = shortcut;
+  if (!shortcut || !app.isReady()) return false;
+  try {
+    windowToggleShortcutRegistered = globalShortcut.register(shortcut, handleWindowToggleShortcut);
+    if (windowToggleShortcutRegistered) {
+      registeredWindowToggleShortcut = shortcut;
+      return true;
+    }
+  } catch (error) {
+    console.log(`[shortcut] failed to register ${shortcut}: ${error.message}`);
+    return false;
+  }
+  console.log(`[shortcut] failed to register ${shortcut}`);
+  return false;
+}
+
 function ensureTray() {
   if (tray && !tray.isDestroyed()) return;
   tray = createTray({
@@ -1033,9 +1101,7 @@ function ensureTray() {
       settings.trayMode = false;
       saveSettings();
       exitTrayMode();
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        try { mainWindow.webContents.send('settings:push', settings); } catch (_) {}
-      }
+      pushSettingsToRenderer();
     }
   });
 }
@@ -1531,12 +1597,13 @@ app.whenReady().then(() => {
   applyMacActivationPolicy();
   createWindow();
   syncLoginItemSettingFromOs();
+  configureWindowToggleShortcut();
   cleanupStaleStaging().catch((error) => console.log(`[tokscale] staging cleanup failed: ${error.message}`));
   if (settings.trayMode) enterTrayMode();
   startMode();
   if (settings.discordRpcEnabled) startDiscordRpc();
   setTimeout(() => { checkTokscaleNpm({ silent: true }); }, 2000);
-  ipcMain.handle('settings:get', () => settings);
+  ipcMain.handle('settings:get', () => settingsForRenderer());
   ipcMain.handle('settings:update', (_event, patch) => {
     const previousNativeMaterial = nativeBlurEnabled();
     const previousHubMode = settings.hubMode;
@@ -1586,6 +1653,7 @@ app.whenReady().then(() => {
       trayMode: parseBoolean(patch.trayMode ?? settings.trayMode, false),
       trayContent: normalizeTrayContent(patch.trayContent ?? settings.trayContent),
       floatingBubbleContent: normalizeTrayContent(patch.floatingBubbleContent ?? settings.floatingBubbleContent, 'icon'),
+      windowToggleShortcut: normalizeWindowToggleShortcut(patch.windowToggleShortcut ?? settings.windowToggleShortcut),
       currency: normalizedCurrency,
       language: patch.language !== undefined ? normalizeLanguageSetting(patch.language, settings.language) : normalizeLanguageSetting(settings.language),
       startAtLogin: loginItemEnabledHere() ? parseBoolean(patch.startAtLogin ?? settings.startAtLogin, false) : false
@@ -1594,6 +1662,7 @@ app.whenReady().then(() => {
     if (settings.clients !== previousClients) updateArchivedClientUsage(previousClients, settings.clients);
     delete settings.edgeDrawerEnabled;
     saveSettings();
+    configureWindowToggleShortcut();
     if (settings.startAtLogin !== previousStartAtLogin) {
       settings.startAtLogin = applyLoginItem(settings.startAtLogin);
       saveSettings();
@@ -1633,7 +1702,7 @@ app.whenReady().then(() => {
     } else if (settings.trayContent !== previousTrayContent || settings.currency !== previousCurrency) {
       updateTrayDisplay();
     }
-    return settings;
+    return settingsForRenderer();
   });
   ipcMain.handle('appearance:preview', (_event, patch) => {
     applyNativeMaterial({ ...settings, ...patch });
@@ -1882,7 +1951,7 @@ app.whenReady().then(() => {
 
 app.on('second-instance', focusExistingWindow);
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
-app.on('before-quit', () => { quitRequested = true; stopAll(); });
+app.on('before-quit', () => { quitRequested = true; unregisterWindowToggleShortcut(); stopAll(); });
 for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) {
   process.once(signal, requestAppQuit);
 }

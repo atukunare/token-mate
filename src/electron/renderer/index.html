@@ -222,6 +222,15 @@
               <option value="icon" data-i18n="settings.tray.iconOnly">Icon only</option>
             </select>
           </label>
+          <div class="settings-field">
+            <div class="settings-field-label" data-i18n="settings.display.windowShortcut">Shortcut</div>
+            <div class="shortcut-recorder">
+              <div id="windowToggleShortcutValue" class="shortcut-value" aria-live="polite">Off</div>
+              <button id="windowToggleShortcutRecordButton" type="button" data-i18n="settings.shortcut.record">Record</button>
+              <button id="windowToggleShortcutClearButton" type="button" data-i18n="settings.shortcut.clear">Clear</button>
+            </div>
+          </div>
+          <p id="windowToggleShortcutNote" class="settings-note" data-i18n="settings.display.windowShortcutNote">Record a global shortcut to show or hide the window.</p>
         </div>
         <div id="startupGroup" class="settings-group">
           <div class="settings-group-header"><span data-i18n="settings.startup.title">Startup</span></div>
@@ -311,6 +320,7 @@
     <script src="i18n.js"></script>
     <script src="sessionRows.js"></script>
     <script src="sessionDetail.js"></script>
+    <script src="../windowShortcut.js"></script>
     <script src="../../shared/currency.js"></script>
     <script src="../../shared/trayText.js"></script>
     <script src="app.js"></script>

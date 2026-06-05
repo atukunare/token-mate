@@ -63,6 +63,19 @@ test('tray limit labels describe remaining quota instead of ambiguous worst wind
   assert.equal(translate('zh-CN', 'settings.tray.barsWindow'), '额度条：任一额度剩余最少');
 });
 
+test('window shortcut labels stay concise in Chinese', () => {
+  assert.equal(translate('zh-TW', 'settings.display.windowShortcut'), '快捷鍵');
+  assert.equal(translate('zh-TW', 'settings.shortcut.record'), '錄製');
+  assert.equal(translate('zh-TW', 'settings.display.windowShortcutListening'), '按下快捷鍵，Esc 取消。');
+  assert.equal(translate('zh-TW', 'settings.display.windowShortcutInvalid'), '請搭配 Ctrl、Cmd 或 Alt。');
+  assert.equal(translate('zh-TW', 'settings.display.windowShortcutConflict', { shortcut: 'Cmd/Ctrl+Shift+M' }), '無法註冊 Cmd/Ctrl+Shift+M，可能和其他 app 衝突。');
+  assert.equal(translate('zh-CN', 'settings.display.windowShortcut'), '快捷键');
+  assert.equal(translate('zh-CN', 'settings.shortcut.record'), '录制');
+  assert.equal(translate('zh-CN', 'settings.display.windowShortcutListening'), '按下快捷键，Esc 取消。');
+  assert.equal(translate('zh-CN', 'settings.display.windowShortcutInvalid'), '请搭配 Ctrl、Cmd 或 Alt。');
+  assert.equal(translate('zh-CN', 'settings.display.windowShortcutConflict', { shortcut: 'Cmd/Ctrl+Shift+M' }), '无法注册 Cmd/Ctrl+Shift+M，可能和其他 app 冲突。');
+});
+
 test('AI limit capability labels stay compact in Chinese', () => {
   assert.equal(translate('zh-TW', 'settings.limits.capability.appMustBeOpen'), '需開啟 App');
   assert.equal(translate('zh-TW', 'settings.limits.capability.manualLogin'), '手動登入');
