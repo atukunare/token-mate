@@ -42,6 +42,7 @@ const { aggregateDevices } = require('../shared/usage');
 const { readSessionDetail } = require('../shared/sessionDetail');
 const { startDiscordRpc, stopDiscordRpc, updateDiscordRpc } = require('./discordRpc');
 const { buildTrayIcon, createTray, formatTrayText, pickUsageTrayIconId, popoverBounds } = require('./tray');
+const { createServiceStatusClient } = require('./serviceStatus');
 const { describeWindowBehavior, normalizeWindowBehaviorSettings } = require('./windowBehavior');
 const {
   normalizeWindowToggleShortcut,
@@ -91,12 +92,13 @@ const HUB_MODE_VALUES = new Set(['local', 'client', 'host']);
 const LANGUAGE_VALUES = new Set(['auto', 'en', 'zh-TW', 'zh-CN']);
 const HUB_DEFAULT_PORT = 17321;
 const DEFAULT_CLIENT_LIST = DEFAULT_CLIENTS.split(',').map((id) => ({ id }));
-const DEFAULT_VIEW_LIST = ['tool', 'device', 'model', 'session', 'limits'].map((id) => ({ id }));
+const DEFAULT_VIEW_LIST = ['tool', 'status', 'device', 'model', 'session', 'limits'].map((id) => ({ id }));
 
 let mainWindow = null;
 let settingsPath = null;
 let settings = null;
 let rendererViewState = normalizeInitialRendererViewState();
+const serviceStatusClient = createServiceStatusClient();
 
 app.setName(APP_NAME);
 if (process.platform === 'win32') app.setAppUserModelId('com.javis.tokenmonitor');
@@ -1381,6 +1383,8 @@ function isAllowedExternalUrl(value) {
   if (parsed.hostname === 'github.com' && parsed.pathname.startsWith('/Javis603/token-monitor')) return true;
   if ((parsed.hostname === 'cursor.com' || parsed.hostname === 'www.cursor.com') && parsed.pathname.startsWith('/settings')) return true;
   if (parsed.hostname === 'opencode.ai' || parsed.hostname === 'www.opencode.ai') return true;
+  if (parsed.hostname === 'status.openai.com' && (parsed.pathname === '' || parsed.pathname === '/')) return true;
+  if (parsed.hostname === 'status.claude.com' && (parsed.pathname === '' || parsed.pathname === '/')) return true;
   return false;
 }
 
@@ -1837,6 +1841,7 @@ app.whenReady().then(() => {
     return readSessionDetail({ client, sessionId, period, sessionCost, home: os.homedir() });
   });
   ipcMain.handle('stream:status', () => ({ connected: streamConnected, mode }));
+  ipcMain.handle('serviceStatus:get', (_event, options) => serviceStatusClient.getServiceStatus({ force: Boolean(options?.force) }));
   ipcMain.handle('hub:getInfo', () => getHubInfo());
   ipcMain.handle('hub:regenerateSecret', () => {
     settings.hubHostSecret = generateHubSecret();

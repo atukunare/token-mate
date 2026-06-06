@@ -117,13 +117,18 @@ const fallbackModelColors = ['#6ab4f0', '#cc7c5e', '#a57df0', '#49a3b0', '#f0d66
 const baseBreakdownOrder = ['tool', 'device', 'model', 'session'];
 const VIEW_DISPLAY_OPTIONS = [
   { id: 'tool', labelKey: 'views.tool' },
+  { id: 'status', labelKey: 'views.status' },
   { id: 'device', labelKey: 'views.device' },
   { id: 'model', labelKey: 'views.model' },
   { id: 'session', labelKey: 'views.session' },
   { id: 'limits', labelKey: 'views.limits' }
 ];
 const viewPeriodValues = new Set(['today', 'month', 'allTime']);
-const viewBreakdownValues = new Set([...baseBreakdownOrder, 'limits']);
+const viewBreakdownValues = new Set([...baseBreakdownOrder, 'status', 'limits']);
+const SERVICE_STATUS_PLACEHOLDERS = [
+  { id: 'openai', label: 'OpenAI', pageUrl: 'https://status.openai.com' },
+  { id: 'claude', label: 'Claude', pageUrl: 'https://status.claude.com' }
+];
 const initialFloatingBubble = window.__TOKEN_MONITOR_INITIAL_FLOATING_BUBBLE__ || { collapsed: false, side: null };
 const initialViewState = window.__TOKEN_MONITOR_INITIAL_VIEW_STATE__ || {};
 
@@ -132,11 +137,11 @@ function normalizeInitialViewValue(value, allowed, fallback) {
   return allowed.has(raw) ? raw : fallback;
 }
 
-const state = { period: normalizeInitialViewValue(initialViewState.period, viewPeriodValues, 'today'), appUpdate: null, breakdown: normalizeInitialViewValue(initialViewState.breakdown, viewBreakdownValues, 'tool'), settings: null, stats: null, refreshTimer: null, currentTotal: 0, rowSignature: '', streamConnected: false, mode: 'idle', appInfo: null, tokscaleStatus: null, tokscaleCheck: null, tokscaleBusy: false, hubInfo: null, cursorAccount: { status: null, error: '' }, cursorAccountExpanded: false, opencodeAccount: { status: null, error: '' }, opencodeCookieExpanded: false, floatingBubble: initialFloatingBubble, suppressInitialNumberAnimation: window.__TOKEN_MONITOR_SUPPRESS_INITIAL_NUMBER_ANIMATION__ === true, openSession: null, detailSort: 'time', recordingWindowShortcut: false, windowShortcutInvalid: false };
+const state = { period: normalizeInitialViewValue(initialViewState.period, viewPeriodValues, 'today'), appUpdate: null, breakdown: normalizeInitialViewValue(initialViewState.breakdown, viewBreakdownValues, 'tool'), settings: null, stats: null, serviceStatus: null, serviceStatusBusy: false, refreshTimer: null, currentTotal: 0, rowSignature: '', streamConnected: false, mode: 'idle', appInfo: null, tokscaleStatus: null, tokscaleCheck: null, tokscaleBusy: false, hubInfo: null, cursorAccount: { status: null, error: '' }, cursorAccountExpanded: false, opencodeAccount: { status: null, error: '' }, opencodeCookieExpanded: false, floatingBubble: initialFloatingBubble, suppressInitialNumberAnimation: window.__TOKEN_MONITOR_SUPPRESS_INITIAL_NUMBER_ANIMATION__ === true, openSession: null, detailSort: 'time', recordingWindowShortcut: false, windowShortcutInvalid: false };
 const defaultAppearance = { glassOpacity: 68, glassBlur: 32, zoomFactor: 1, systemGlass: true, showLiveDot: true, showToolIcons: true, titleIconOnly: false };
 let preferenceDrag = null;
 const els = {
-  shell: document.querySelector('.shell'), status: document.getElementById('status'), liveDot: document.getElementById('liveDot'), totalTokens: document.getElementById('totalTokens'), cost: document.getElementById('cost'), breakdown: document.getElementById('breakdown'), limitsPanel: document.getElementById('limitsPanel'), breakdownToggle: document.getElementById('breakdownToggle'), pinButton: document.getElementById('pinButton'), settingsButton: document.getElementById('settingsButton'), settingsPanel: document.getElementById('settingsPanel'), languageInput: document.getElementById('languageInput'), currencyInput: document.getElementById('currencyInput'), hubUrlInput: document.getElementById('hubUrlInput'), secretInput: document.getElementById('secretInput'), deviceIdInput: document.getElementById('deviceIdInput'), limitProviderCheckboxes: document.getElementById('limitProviderCheckboxes'), limitsRefreshInput: document.getElementById('limitsRefreshInput'), showLimitSourceInput: document.getElementById('showLimitSourceInput'), systemGlassInput: document.getElementById('systemGlassInput'), liveDotInput: document.getElementById('liveDotInput'), toolIconsInput: document.getElementById('toolIconsInput'), floatingBubbleInput: document.getElementById('floatingBubbleInput'), floatingBubbleTriggerInput: document.getElementById('floatingBubbleTriggerInput'), floatingBubbleTriggerRow: document.getElementById('floatingBubbleTriggerRow'), floatingBubbleContentInput: document.getElementById('floatingBubbleContentInput'), floatingBubbleContentRow: document.getElementById('floatingBubbleContentRow'), floatingBubbleContent: document.getElementById('floatingBubbleContent'), discordRpcInput: document.getElementById('discordRpcInput'), windowBehaviorInput: document.getElementById('windowBehaviorInput'), trayModeInput: document.getElementById('trayModeInput'), trayContentInput: document.getElementById('trayContentInput'), windowToggleShortcutValue: document.getElementById('windowToggleShortcutValue'), windowToggleShortcutRecordButton: document.getElementById('windowToggleShortcutRecordButton'), windowToggleShortcutClearButton: document.getElementById('windowToggleShortcutClearButton'), windowToggleShortcutNote: document.getElementById('windowToggleShortcutNote'), glassInput: document.getElementById('glassInput'), blurInput: document.getElementById('blurInput'), zoomInput: document.getElementById('zoomInput'), resetGlassButton: document.getElementById('resetGlassButton'), resetDepthButton: document.getElementById('resetDepthButton'), resetZoomButton: document.getElementById('resetZoomButton'), saveSettingsButton: document.getElementById('saveSettingsButton'), clientDisplayList: document.getElementById('clientDisplayList'), openConfigButton: document.getElementById('openConfigButton'), refreshButton: document.getElementById('refreshButton'), minButton: document.getElementById('minButton'), closeButton: document.getElementById('closeButton'), floatingBubbleTab: document.getElementById('floatingBubbleTab')
+  shell: document.querySelector('.shell'), status: document.getElementById('status'), liveDot: document.getElementById('liveDot'), totalTokens: document.getElementById('totalTokens'), cost: document.getElementById('cost'), breakdown: document.getElementById('breakdown'), serviceStatusPanel: document.getElementById('serviceStatusPanel'), limitsPanel: document.getElementById('limitsPanel'), breakdownToggle: document.getElementById('breakdownToggle'), pinButton: document.getElementById('pinButton'), settingsButton: document.getElementById('settingsButton'), settingsPanel: document.getElementById('settingsPanel'), languageInput: document.getElementById('languageInput'), currencyInput: document.getElementById('currencyInput'), hubUrlInput: document.getElementById('hubUrlInput'), secretInput: document.getElementById('secretInput'), deviceIdInput: document.getElementById('deviceIdInput'), limitProviderCheckboxes: document.getElementById('limitProviderCheckboxes'), limitsRefreshInput: document.getElementById('limitsRefreshInput'), showLimitSourceInput: document.getElementById('showLimitSourceInput'), systemGlassInput: document.getElementById('systemGlassInput'), liveDotInput: document.getElementById('liveDotInput'), toolIconsInput: document.getElementById('toolIconsInput'), floatingBubbleInput: document.getElementById('floatingBubbleInput'), floatingBubbleTriggerInput: document.getElementById('floatingBubbleTriggerInput'), floatingBubbleTriggerRow: document.getElementById('floatingBubbleTriggerRow'), floatingBubbleContentInput: document.getElementById('floatingBubbleContentInput'), floatingBubbleContentRow: document.getElementById('floatingBubbleContentRow'), floatingBubbleContent: document.getElementById('floatingBubbleContent'), discordRpcInput: document.getElementById('discordRpcInput'), windowBehaviorInput: document.getElementById('windowBehaviorInput'), trayModeInput: document.getElementById('trayModeInput'), trayContentInput: document.getElementById('trayContentInput'), windowToggleShortcutValue: document.getElementById('windowToggleShortcutValue'), windowToggleShortcutRecordButton: document.getElementById('windowToggleShortcutRecordButton'), windowToggleShortcutClearButton: document.getElementById('windowToggleShortcutClearButton'), windowToggleShortcutNote: document.getElementById('windowToggleShortcutNote'), glassInput: document.getElementById('glassInput'), blurInput: document.getElementById('blurInput'), zoomInput: document.getElementById('zoomInput'), resetGlassButton: document.getElementById('resetGlassButton'), resetDepthButton: document.getElementById('resetDepthButton'), resetZoomButton: document.getElementById('resetZoomButton'), saveSettingsButton: document.getElementById('saveSettingsButton'), clientDisplayList: document.getElementById('clientDisplayList'), openConfigButton: document.getElementById('openConfigButton'), refreshButton: document.getElementById('refreshButton'), minButton: document.getElementById('minButton'), closeButton: document.getElementById('closeButton'), floatingBubbleTab: document.getElementById('floatingBubbleTab')
 };
 Object.assign(els, {
   hubModeOptions: document.getElementById('hubModeOptions'),
@@ -627,7 +632,8 @@ function limitViewAvailable() {
 }
 
 function availableBreakdownIds() {
-  return limitViewAvailable() ? [...baseBreakdownOrder, 'limits'] : baseBreakdownOrder;
+  const order = [baseBreakdownOrder[0], 'status', ...baseBreakdownOrder.slice(1)];
+  return limitViewAvailable() ? [...order, 'limits'] : order;
 }
 
 function visibleBreakdownOrder() {
@@ -881,6 +887,101 @@ function renderLimits() {
   els.limitsPanel.replaceChildren(...nodes);
 }
 
+function serviceStatusLabel(status) {
+  if (status === 'ok') return t('serviceStatus.ok');
+  if (status === 'degraded') return t('serviceStatus.degraded');
+  if (status === 'outage') return t('serviceStatus.outage');
+  return t('serviceStatus.unknown');
+}
+
+function serviceStatusMeta(provider) {
+  const parts = [];
+  if (Number(provider.componentIssues?.length || 0) > 0) parts.push(t('serviceStatus.components', { count: provider.componentIssues.length }));
+  if (Number(provider.incidentCount || 0) > 0) parts.push(t('serviceStatus.incidents', { count: provider.incidentCount }));
+  if (Number(provider.maintenanceCount || 0) > 0) parts.push(t('serviceStatus.maintenance', { count: provider.maintenanceCount }));
+  return parts.join(' · ') || t('serviceStatus.noIssues');
+}
+
+function serviceStatusRows() {
+  if (state.serviceStatus?.providers?.length) return state.serviceStatus.providers;
+  return SERVICE_STATUS_PLACEHOLDERS.map((provider) => ({
+    ...provider,
+    status: 'unknown',
+    description: state.serviceStatusBusy ? t('serviceStatus.loading') : t('serviceStatus.notChecked'),
+    checkedAt: '',
+    updatedAt: '',
+    componentIssues: [],
+    incidentCount: 0,
+    maintenanceCount: 0
+  }));
+}
+
+function renderServiceStatus() {
+  if (!els.serviceStatusPanel) return;
+  const rows = serviceStatusRows().map((provider) => {
+    const row = document.createElement('button');
+    row.type = 'button';
+    row.className = `service-status-row service-status-${provider.status || 'unknown'}`;
+    row.dataset.provider = provider.id;
+    row.title = t('serviceStatus.openPage', { name: provider.label });
+    row.addEventListener('click', () => window.tokenMonitor.openExternal?.(provider.pageUrl));
+    const head = document.createElement('div');
+    head.className = 'service-status-head';
+    const name = document.createElement('strong');
+    name.textContent = provider.label;
+    const pill = document.createElement('span');
+    pill.className = 'service-status-pill';
+    pill.textContent = serviceStatusLabel(provider.status);
+    head.append(name, pill);
+    const description = document.createElement('div');
+    description.className = 'service-status-description';
+    description.textContent = provider.description || t('serviceStatus.unknown');
+    const meta = document.createElement('div');
+    meta.className = 'service-status-meta';
+    const checked = provider.checkedAt ? t('serviceStatus.checkedAt', { time: formatTime(provider.checkedAt) }) : '';
+    meta.textContent = [serviceStatusMeta(provider), checked].filter(Boolean).join(' · ');
+    row.append(head, description, meta);
+    return row;
+  });
+  els.serviceStatusPanel.replaceChildren(...rows);
+}
+
+async function refreshServiceStatus(options = {}) {
+  if (!window.tokenMonitor.getServiceStatus || state.serviceStatusBusy) return;
+  state.serviceStatusBusy = true;
+  renderServiceStatus();
+  try {
+    state.serviceStatus = await window.tokenMonitor.getServiceStatus({ force: options.force === true });
+  } catch (error) {
+    const checkedAt = new Date().toISOString();
+    state.serviceStatus = {
+      checkedAt,
+      providers: SERVICE_STATUS_PLACEHOLDERS.map((provider) => ({
+        ...provider,
+        status: 'unknown',
+        indicator: 'unknown',
+        description: t('serviceStatus.checkFailed'),
+        checkedAt,
+        updatedAt: '',
+        componentIssues: [],
+        incidentCount: 0,
+        maintenanceCount: 0,
+        error: error.message
+      }))
+    };
+  } finally {
+    state.serviceStatusBusy = false;
+    renderServiceStatus();
+  }
+}
+
+function maybeRefreshServiceStatus() {
+  if (state.breakdown !== 'status' || state.serviceStatusBusy) return;
+  const checkedAt = Date.parse(state.serviceStatus?.checkedAt || '');
+  if (Number.isFinite(checkedAt) && Date.now() - checkedAt < 60_000) return;
+  refreshServiceStatus().catch(() => {});
+}
+
 function nextBreakdown(value) {
   const order = visibleBreakdownOrder();
   const index = order.indexOf(value);
@@ -889,6 +990,7 @@ function nextBreakdown(value) {
 
 function breakdownLabel(deviceText) {
   if (state.breakdown === 'device') return deviceText;
+  if (state.breakdown === 'status') return 'Status';
   if (state.breakdown === 'model') return 'Model';
   if (state.breakdown === 'session') return 'Sessions';
   if (state.breakdown === 'limits') return 'Limits';
@@ -1041,15 +1143,24 @@ function render() {
   els.shell.classList.toggle('session-mode', state.breakdown === 'session');
   if (state.breakdown === 'limits') {
     els.breakdown.classList.add('hidden');
+    els.serviceStatusPanel?.classList.add('hidden');
     els.limitsPanel.classList.remove('hidden');
     renderLimits();
+  } else if (state.breakdown === 'status') {
+    els.breakdown.classList.add('hidden');
+    els.limitsPanel.classList.add('hidden');
+    els.serviceStatusPanel?.classList.remove('hidden');
+    renderServiceStatus();
+    maybeRefreshServiceStatus();
   } else if (state.openSession) {
     // session-detail view replaces the breakdown list; keep both the list and
     // limits hidden so a periodic re-render doesn't surface them over the detail.
     els.limitsPanel.classList.add('hidden');
+    els.serviceStatusPanel?.classList.add('hidden');
     els.breakdown.classList.add('hidden');
   } else {
     els.limitsPanel.classList.add('hidden');
+    els.serviceStatusPanel?.classList.add('hidden');
     els.breakdown.classList.remove('hidden');
     const rows = rowsForPeriod(period);
     renderRows(rows);
@@ -2299,7 +2410,10 @@ els.checkTokscaleButton?.addEventListener('click', checkTokscaleNpm);
 els.downloadTokscaleButton?.addEventListener('click', downloadTokscaleFromNpm);
 els.resetTokscaleButton?.addEventListener('click', resetTokscaleToBundled);
 els.openTokscaleLinkButton?.addEventListener('click', () => window.tokenMonitor.openExternal?.('https://github.com/junhoyeo/tokscale'));
-els.refreshButton.addEventListener('click', () => refreshStats({ force: true }));
+els.refreshButton.addEventListener('click', () => {
+  if (state.breakdown === 'status') refreshServiceStatus({ force: true }).catch(() => {});
+  else refreshStats({ force: true });
+});
 els.minButton.addEventListener('click', () => window.tokenMonitor.minimize());
 els.closeButton.addEventListener('click', () => window.tokenMonitor.close());
 els.floatingBubbleTab.addEventListener('pointerdown', handleFloatingBubblePointerDown);

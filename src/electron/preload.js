@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('tokenMonitor', {
   getStats: (options) => ipcRenderer.invoke('stats:get', options),
   getSessionDetail: (args) => ipcRenderer.invoke('session:getDetail', args),
   getStreamStatus: () => ipcRenderer.invoke('stream:status'),
+  getServiceStatus: (options) => ipcRenderer.invoke('serviceStatus:get', options),
   getHubInfo: () => ipcRenderer.invoke('hub:getInfo'),
   regenerateHubSecret: () => ipcRenderer.invoke('hub:regenerateSecret'),
   onHubPush: (callback) => {
