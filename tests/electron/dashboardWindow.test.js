@@ -33,6 +33,14 @@ test('getDashboardHistory mirrors the local/sync split of fetchStats', () => {
   assert.match(main, /\/api\/history/);
 });
 
+test('dashboard history is gated by the historyEnabled setting', () => {
+  const main = read('src', 'electron', 'main.js');
+  assert.match(main, /historyEnabled:\s*true/);
+  assert.match(main, /historyEnabled:\s*parseBoolean\(patch\.historyEnabled/);
+  assert.match(main, /if \(settings\?\.historyEnabled === false\) return aggregateHistory\(\[\], 0\)/);
+  assert.match(main, /historyEnabled:\s*settings\.historyEnabled !== false/);
+});
+
 test('dashboard.html wires the shared modules and the two panels', () => {
   const html = read('src', 'electron', 'renderer', 'dashboard.html');
   assert.match(html, /<link rel="stylesheet" href="styles\.css" \/>/);
@@ -73,4 +81,10 @@ test('the trends preview opens the dashboard via IPC', () => {
   const app = read('src', 'electron', 'renderer', 'app.js');
   assert.match(app, /trendsPanel\.addEventListener/);
   assert.match(app, /window\.tokenMonitor\.openDashboard\(\)/);
+});
+
+test('renderer removes Trends from available views when history is disabled', () => {
+  const app = read('src', 'electron', 'renderer', 'app.js');
+  assert.match(app, /state\.settings\?\.historyEnabled === false/);
+  assert.match(app, /order\.filter\(\(id\) => id !== 'trends'\)/);
 });

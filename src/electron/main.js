@@ -94,7 +94,7 @@ const HUB_MODE_VALUES = new Set(['local', 'client', 'host']);
 const LANGUAGE_VALUES = new Set(['auto', 'en', 'zh-TW', 'zh-CN']);
 const HUB_DEFAULT_PORT = 17321;
 const DEFAULT_CLIENT_LIST = DEFAULT_CLIENTS.split(',').map((id) => ({ id }));
-const DEFAULT_VIEW_LIST = ['tool', 'status', 'device', 'model', 'session', 'limits'].map((id) => ({ id }));
+const DEFAULT_VIEW_LIST = ['tool', 'status', 'device', 'model', 'session', 'limits', 'trends'].map((id) => ({ id }));
 
 let mainWindow = null;
 let dashboardWindow = null;
@@ -145,6 +145,7 @@ function defaultSettings() {
     pinnedClients: '',
     viewDisplayOrder: '',
     hiddenViews: defaultViewDisplayPreferences().hiddenViews,
+    historyEnabled: true,
     serviceProviderDisplayOrder: '',
     hiddenServiceProviders: '',
     serviceStatusRefreshMs: 60000,
@@ -573,6 +574,9 @@ function readSettings() {
     if (saved.hiddenViews !== undefined) {
       merged.hiddenViews = normalizeHiddenViews(saved.hiddenViews, DEFAULT_VIEW_LIST);
     }
+    if (saved.historyEnabled !== undefined) {
+      merged.historyEnabled = parseBoolean(saved.historyEnabled, true);
+    }
     if (saved.serviceProviderDisplayOrder !== undefined) {
       merged.serviceProviderDisplayOrder = String(saved.serviceProviderDisplayOrder || '');
     }
@@ -719,7 +723,8 @@ function applyNativeMaterial(source = settings) {
 }
 
 function withHistoryPreview(stats, devices) {
-  stats.historyPreview = historyPreview(aggregateHistory(devices, 0));
+  const history = settings?.historyEnabled === false ? aggregateHistory([], 0) : aggregateHistory(devices, 0);
+  stats.historyPreview = historyPreview(history);
   return stats;
 }
 
@@ -883,6 +888,7 @@ function startSyncCollector() {
     agentVersion: appVersion(),
     agentRuntime: 'electron-widget',
     intervalMs: 5 * 60 * 1000,
+    historyEnabled: settings.historyEnabled !== false,
     historyIntervalMs: Number(process.env.TOKEN_MONITOR_HISTORY_INTERVAL_MS || 15 * 60 * 1000),
     watchEnabled: true,
     watchDebounceMs: 1500,
@@ -964,6 +970,7 @@ function startLocalCollector() {
     agentVersion: appVersion(),
     agentRuntime: 'electron-widget',
     intervalMs: 5 * 60 * 1000,
+    historyEnabled: settings.historyEnabled !== false,
     historyIntervalMs: Number(process.env.TOKEN_MONITOR_HISTORY_INTERVAL_MS || 15 * 60 * 1000),
     watchEnabled: true,
     watchDebounceMs: 1500,
@@ -1646,6 +1653,7 @@ function createDashboardWindow() {
 }
 
 async function getDashboardHistory() {
+  if (settings?.historyEnabled === false) return aggregateHistory([], 0);
   if (mode === 'local') {
     if (localCollectorHandle) { try { await localCollectorHandle.tick('manual'); } catch (_) {} }
     return aggregateHistory(localDevice ? [localDevice] : [], 0);
@@ -1748,6 +1756,7 @@ app.whenReady().then(() => {
     const previousLimitsEnabled = settings.limitsEnabled;
     const previousLimitProviders = settings.limitProviders;
     const previousLimitsRefreshMs = settings.limitsRefreshMs;
+    const previousHistoryEnabled = settings.historyEnabled;
     const previousDeepSeekApiKey = settings.deepseekApiKey;
     const previousDiscordRpcEnabled = settings.discordRpcEnabled;
     const previousTrayMode = settings.trayMode;
@@ -1783,6 +1792,7 @@ app.whenReady().then(() => {
       pinnedClients: patch.pinnedClients !== undefined ? normalizePinnedClients(patch.pinnedClients, DEFAULT_CLIENT_LIST) : normalizePinnedClients(settings.pinnedClients, DEFAULT_CLIENT_LIST),
       viewDisplayOrder: patch.viewDisplayOrder !== undefined ? migrateViewDisplayOrder(patch.viewDisplayOrder) : (settings.viewDisplayOrder || ''),
       hiddenViews: patch.hiddenViews !== undefined ? normalizeHiddenViews(patch.hiddenViews, DEFAULT_VIEW_LIST) : normalizeHiddenViews(settings.hiddenViews, DEFAULT_VIEW_LIST),
+      historyEnabled: parseBoolean(patch.historyEnabled ?? settings.historyEnabled, true),
       serviceProviderDisplayOrder: patch.serviceProviderDisplayOrder !== undefined ? String(patch.serviceProviderDisplayOrder || '') : (settings.serviceProviderDisplayOrder || ''),
       hiddenServiceProviders: patch.hiddenServiceProviders !== undefined ? String(patch.hiddenServiceProviders || '') : (settings.hiddenServiceProviders || ''),
       serviceStatusRefreshMs: normalizeServiceStatusRefreshMs(patch.serviceStatusRefreshMs ?? settings.serviceStatusRefreshMs),
@@ -1833,6 +1843,7 @@ app.whenReady().then(() => {
       settings.limitsEnabled !== previousLimitsEnabled ||
       settings.limitProviders !== previousLimitProviders ||
       settings.limitsRefreshMs !== previousLimitsRefreshMs ||
+      settings.historyEnabled !== previousHistoryEnabled ||
       settings.deepseekApiKey !== previousDeepSeekApiKey
     ) {
       startMode();

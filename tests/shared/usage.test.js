@@ -397,6 +397,16 @@ test('mergeDeviceRecord preserves prior history when the incoming post omits it'
   assert.equal(merged.history.daily[0].tokens, 5);
 });
 
+test('mergeDeviceRecord clears prior history when incoming history is explicitly null', () => {
+  const existing = normalizeDeviceRecord({
+    deviceId: 'm1',
+    today: { totalTokens: 1, costUsd: 0, clients: {}, clientCosts: {} },
+    history: { daily: [{ date: '2026-06-07', tokens: 5 }], monthly: [], summary: { totalTokens: 5 } }
+  });
+  const merged = mergeDeviceRecord(existing, { deviceId: 'm1', history: null });
+  assert.deepEqual(merged.history, { daily: [], monthly: [], summary: {} });
+});
+
 test('aggregateHistory merges non-stale devices and skips stale ones', () => {
   const now = Date.parse('2026-06-07T12:00:00.000Z');
   const fresh = {

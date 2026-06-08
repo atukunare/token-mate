@@ -164,6 +164,7 @@ test('main section holds views and appearance; window section holds behavior and
 
   const mainScreen = main.match(/<div class="settings-subgroup settings-main-screen-group">[\s\S]*?<div class="settings-subgroup settings-appearance-group">/)?.[0] || '';
   assert.match(mainScreen, /id="viewDisplayList"/);
+  assert.doesNotMatch(mainScreen, /id="historyEnabledInput"/);
   assert.match(mainScreen, /id="currencyInput"/);
 
   const windowSection = html.slice(
@@ -186,6 +187,20 @@ test('main section holds views and appearance; window section holds behavior and
   const presenceGroup = windowSection.slice(presenceIndex);
   assert.match(presenceGroup, /id="floatingBubbleInput"/);
   assert.match(presenceGroup, /id="trayModeInput"/);
+});
+
+test('trend history collection is controlled from an expandable Trends settings row', () => {
+  const app = readRendererFile('app.js');
+  const css = readRendererFile('styles.css');
+  assert.match(app, /id === 'trends'/);
+  assert.match(app, /trendSettingsExpanded/);
+  assert.match(app, /function renderTrendSettingsList/);
+  assert.match(app, /id = 'trendSettingsList'|id: 'trendSettingsList'|'trendSettingsList'/);
+  assert.match(app, /settings\.views\.configureTrend/);
+  assert.match(app, /historyEnabled:\s*enabled/);
+  assert.match(app, /row\.classList\.toggle\('is-disabled'/);
+  assert.match(css, /\.view-preference-row\.is-disabled/);
+  assert.match(css, /\.trend-settings-list/);
 });
 
 test('general section owns app-level preferences before startup and updates', () => {

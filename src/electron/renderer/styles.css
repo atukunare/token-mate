@@ -844,6 +844,17 @@ body.floating-bubble-collapsed-right .floating-bubble-tab {
 .view-preference-row.is-hidden .tool-preference-name {
   opacity: 0.58;
 }
+.view-preference-row.is-disabled .tool-preference-name,
+.view-preference-row.is-disabled .tool-visibility-button,
+.view-preference-row.is-disabled .view-subgroup-toggle,
+.view-preference-row.is-disabled .preference-order-handle {
+  opacity: 0.42;
+}
+.view-preference-row.is-disabled .tool-visibility-button:hover,
+.view-preference-row.is-disabled .view-subgroup-toggle:hover,
+.view-preference-row.is-disabled .preference-order-handle:hover:not(:disabled) {
+  opacity: 0.72;
+}
 .tool-preference-actions {
   display: contents;
 }
@@ -1717,6 +1728,16 @@ body.floating-bubble-collapsed-right .floating-bubble-tab {
   margin: 2px 0 6px 14px;
   padding-left: 8px;
   border-left: 1px solid rgba(197, 216, 236, 0.14);
+}
+.trend-settings-list {
+  display: grid;
+  gap: 6px;
+  margin: 2px 0 6px 14px;
+  padding-left: 8px;
+  border-left: 1px solid rgba(197, 216, 236, 0.14);
+}
+.trend-settings-row {
+  padding: 2px 0;
 }
 .status-provider-header { margin-bottom: 2px; }
 .status-provider-row {

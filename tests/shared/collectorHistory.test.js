@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 
 const {
-  localTodayKey, collectHistoryOnce, shouldIncludeHistory
+  localTodayKey, collectHistoryOnce, collectUsageOnce, shouldIncludeHistory
 } = require('../../src/shared/collector');
 
 test('localTodayKey returns a YYYY-MM-DD string for the given date', () => {
@@ -46,6 +46,27 @@ test('collectHistoryOnce returns null when there are no clients', async () => {
   assert.equal(called, false);
 });
 
+test('collectHistoryOnce skips graph collection when history is disabled', async () => {
+  let graphCalled = false;
+  const history = await collectHistoryOnce({
+    clients: 'claude',
+    historyEnabled: false,
+    runGraph: async () => { graphCalled = true; return SAMPLE_GRAPH; }
+  });
+  assert.equal(graphCalled, false);
+  assert.equal(history, null);
+});
+
+test('collectUsageOnce sends explicit null history when history collection is disabled', async () => {
+  const summary = await collectUsageOnce({
+    clients: '',
+    deviceId: 'device-a',
+    historyEnabled: false,
+    limitsEnabled: false
+  });
+  assert.equal(summary.history, null);
+});
+
 test('shouldIncludeHistory: first call, throttle window, and force', () => {
   const INT = 15 * 60 * 1000;
   const NOW = 1_000_000_000_000;                                        // realistic epoch ms
@@ -53,4 +74,8 @@ test('shouldIncludeHistory: first call, throttle window, and force', () => {
   assert.equal(shouldIncludeHistory(NOW, NOW - 900, INT, false), false); // 900ms ago, within window
   assert.equal(shouldIncludeHistory(NOW, NOW - INT, INT, false), true);  // exactly the window elapsed
   assert.equal(shouldIncludeHistory(NOW, NOW - 900, INT, true), true);   // forced
+});
+
+test('shouldIncludeHistory returns false when history collection is disabled', () => {
+  assert.equal(shouldIncludeHistory(1_000_000_000_000, 0, 0, true, false), false);
 });

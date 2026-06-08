@@ -304,6 +304,7 @@ const HISTORY_TIMEOUT_MS = 60000;
 
 async function collectHistoryOnce(options) {
   const clients = normalizeClientsCsv(options.clients);
+  if (options.historyEnabled === false) return null;
   if (!clients) return null;
   const runGraph = options.runGraph || runTokscaleGraph;
   const capDays = Number.isFinite(options.capDays) ? options.capDays : HISTORY_CAP_DAYS;
@@ -318,7 +319,8 @@ async function collectHistoryOnce(options) {
   }
 }
 
-function shouldIncludeHistory(nowMs, lastHistoryAtMs, historyIntervalMs, force) {
+function shouldIncludeHistory(nowMs, lastHistoryAtMs, historyIntervalMs, force, enabled = true) {
+  if (enabled === false) return false;
   if (force) return true;
   return nowMs - (lastHistoryAtMs || 0) >= historyIntervalMs;
 }
@@ -352,9 +354,12 @@ async function collectUsageOnce(options) {
     month,
     allTime
   };
-  if (options.includeHistory) {
+  if (options.historyEnabled === false) {
+    summary.history = null;
+  } else if (options.includeHistory) {
     const history = await collectHistoryOnce({
       clients: normalizedClients,
+      historyEnabled: options.historyEnabled,
       commandTimeoutMs: options.historyTimeoutMs,
       capDays: options.historyCapDays,
       todayKey: localTodayKey(),
@@ -403,7 +408,7 @@ function watchPathsForClients(clientsCsv) {
 function startCollector(options) {
   const {
     clients, allTimeSince, commandTimeoutMs, deviceId, agentVersion, agentRuntime,
-    intervalMs, historyIntervalMs = 15 * 60 * 1000, watchEnabled, watchDebounceMs, limitsEnabled,
+    intervalMs, historyIntervalMs = 15 * 60 * 1000, historyEnabled = true, watchEnabled, watchDebounceMs, limitsEnabled,
     onUpdate, onError, logger
   } = options;
   const log = logger || (() => {});
@@ -426,7 +431,7 @@ function startCollector(options) {
   }
 
   async function performTick(reason, tickOptions = {}) {
-    const includeHistory = shouldIncludeHistory(Date.now(), lastHistoryAt, historyIntervalMs, Boolean(tickOptions.forceHistory));
+    const includeHistory = shouldIncludeHistory(Date.now(), lastHistoryAt, historyIntervalMs, Boolean(tickOptions.forceHistory), historyEnabled);
     if (includeHistory) lastHistoryAt = Date.now();
     try {
       const summary = await collectUsageOnce({

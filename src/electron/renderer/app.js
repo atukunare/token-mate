@@ -130,7 +130,7 @@ function normalizeInitialViewValue(value, allowed, fallback) {
   return allowed.has(raw) ? raw : fallback;
 }
 
-const state = { period: normalizeInitialViewValue(initialViewState.period, viewPeriodValues, 'today'), appUpdate: null, breakdown: normalizeInitialViewValue(initialViewState.breakdown, viewBreakdownValues, 'tool'), settings: null, stats: null, serviceStatus: null, serviceStatusBusy: false, serviceProvidersExpanded: false, serviceStatusTicker: null, refreshTimer: null, currentTotal: 0, rowSignature: '', streamConnected: false, mode: 'idle', appInfo: null, tokscaleStatus: null, tokscaleCheck: null, tokscaleBusy: false, hubInfo: null, cursorAccount: { status: null, error: '' }, cursorAccountExpanded: false, opencodeAccount: { status: null, error: '' }, opencodeCookieExpanded: false, deepseekAccountExpanded: false, deepseekPendingCheckSince: 0, floatingBubble: initialFloatingBubble, suppressInitialNumberAnimation: window.__TOKEN_MONITOR_SUPPRESS_INITIAL_NUMBER_ANIMATION__ === true, openSession: null, detailSort: 'time', recordingWindowShortcut: false, windowShortcutInvalid: false };
+const state = { period: normalizeInitialViewValue(initialViewState.period, viewPeriodValues, 'today'), appUpdate: null, breakdown: normalizeInitialViewValue(initialViewState.breakdown, viewBreakdownValues, 'tool'), settings: null, stats: null, serviceStatus: null, serviceStatusBusy: false, serviceProvidersExpanded: false, trendSettingsExpanded: false, serviceStatusTicker: null, refreshTimer: null, currentTotal: 0, rowSignature: '', streamConnected: false, mode: 'idle', appInfo: null, tokscaleStatus: null, tokscaleCheck: null, tokscaleBusy: false, hubInfo: null, cursorAccount: { status: null, error: '' }, cursorAccountExpanded: false, opencodeAccount: { status: null, error: '' }, opencodeCookieExpanded: false, deepseekAccountExpanded: false, deepseekPendingCheckSince: 0, floatingBubble: initialFloatingBubble, suppressInitialNumberAnimation: window.__TOKEN_MONITOR_SUPPRESS_INITIAL_NUMBER_ANIMATION__ === true, openSession: null, detailSort: 'time', recordingWindowShortcut: false, windowShortcutInvalid: false };
 state.settingsSections = Object.fromEntries(SETTINGS_SECTION_IDS.map((id) => [id, false]));
 const defaultAppearance = { glassOpacity: 68, glassBlur: 32, zoomFactor: 1, systemGlass: true, showLiveDot: true, showToolIcons: true, titleIconOnly: false };
 let preferenceDrag = null;
@@ -719,7 +719,8 @@ function limitViewAvailable() {
 
 function availableBreakdownIds() {
   const order = [baseBreakdownOrder[0], 'status', 'trends', ...baseBreakdownOrder.slice(1)];
-  return limitViewAvailable() ? [...order, 'limits'] : order;
+  const available = state.settings?.historyEnabled === false ? order.filter((id) => id !== 'trends') : order;
+  return limitViewAvailable() ? [...available, 'limits'] : available;
 }
 
 function visibleBreakdownOrder() {
@@ -2224,10 +2225,13 @@ function renderViewPreferences() {
     const id = view.id;
     const label = viewLabel(view);
     const isHidden = hidden.has(id);
+    const historyEnabled = state.settings?.historyEnabled !== false;
+    const isDisabled = id === 'trends' && !historyEnabled;
     const row = document.createElement('div');
     row.className = 'view-preference-row';
     row.dataset.view = id;
     row.classList.toggle('is-hidden', isHidden);
+    row.classList.toggle('is-disabled', isDisabled);
     const name = document.createElement('div');
     name.className = 'tool-preference-name';
     name.textContent = label;
@@ -2247,6 +2251,27 @@ function renderViewPreferences() {
     actions.append(visibility, handle);
     row.append(name, actions);
     els.viewDisplayList.appendChild(row);
+    if (id === 'trends') {
+      row.classList.add('has-subgroup');
+      const toggle = document.createElement('button');
+      toggle.type = 'button';
+      toggle.className = `view-subgroup-toggle${state.trendSettingsExpanded ? ' is-expanded' : ''}`;
+      toggle.title = t('settings.views.configureTrend', { name: label });
+      toggle.setAttribute('aria-label', toggle.title);
+      toggle.setAttribute('aria-expanded', String(Boolean(state.trendSettingsExpanded)));
+      const toggleIcon = document.createElement('span');
+      toggleIcon.className = 'view-subgroup-icon';
+      toggleIcon.setAttribute('aria-hidden', 'true');
+      toggle.append(toggleIcon);
+      toggle.addEventListener('click', () => {
+        state.trendSettingsExpanded = !state.trendSettingsExpanded;
+        renderViewPreferences();
+      });
+      actions.insertBefore(toggle, visibility);
+      if (state.trendSettingsExpanded) {
+        els.viewDisplayList.appendChild(renderTrendSettingsList());
+      }
+    }
     if (id === 'status') {
       row.classList.add('has-subgroup');
       const toggle = document.createElement('button');
@@ -2269,6 +2294,27 @@ function renderViewPreferences() {
       }
     }
   }
+}
+
+function renderTrendSettingsList() {
+  const wrap = document.createElement('div');
+  wrap.id = 'trendSettingsList';
+  wrap.className = 'trend-settings-list';
+  const label = document.createElement('label');
+  label.className = 'checkbox-label trend-settings-row';
+  const input = document.createElement('input');
+  input.type = 'checkbox';
+  input.checked = state.settings?.historyEnabled !== false;
+  input.addEventListener('change', async () => {
+    const enabled = input.checked;
+    await saveSettings({ historyEnabled: enabled });
+    await refreshStats({ force: true });
+  });
+  const text = document.createElement('span');
+  text.textContent = t('settings.views.historyCollection');
+  label.append(input, text);
+  wrap.append(label);
+  return wrap;
 }
 
 function renderServiceProviderList() {
