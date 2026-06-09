@@ -1277,12 +1277,12 @@ function nextBreakdown(value) {
 
 function breakdownLabel(deviceText) {
   if (state.breakdown === 'device') return deviceText;
-  if (state.breakdown === 'status') return 'Status';
-  if (state.breakdown === 'model') return 'Model';
-  if (state.breakdown === 'session') return 'Sessions';
-  if (state.breakdown === 'limits') return 'Limits';
-  if (state.breakdown === 'trends') return 'Trends';
-  return 'Tools';
+  if (state.breakdown === 'status') return t('views.status') || 'Status';
+  if (state.breakdown === 'model') return t('views.model') || 'Model';
+  if (state.breakdown === 'session') return t('views.session') || 'Sessions';
+  if (state.breakdown === 'limits') return t('views.limits') || 'Limits';
+  if (state.breakdown === 'trends') return t('views.trends') || 'Trends';
+  return t('views.tool') || 'Tools';
 }
 
 async function openSessionDetail({ client, sessionId, sessionCost, title }) {
@@ -1463,7 +1463,10 @@ function render() {
   els.refreshButton.title = `Stats refreshed ${formatTime(state.stats.updatedAt)}`;
   const devices = state.stats.devices || [];
   const staleCount = devices.filter((device) => device.stale).length;
-  const deviceText = `${devices.length} device${devices.length === 1 ? '' : 's'}`;
+  const tDevice = t('views.device');
+  const deviceText = tDevice && tDevice !== 'Devices'
+    ? `${devices.length} ${tDevice}`
+    : `${devices.length} device${devices.length === 1 ? '' : 's'}`;
   els.breakdownToggle.textContent = breakdownLabel(deviceText);
   els.breakdownToggle.removeAttribute('title');
   els.shell.classList.toggle('session-mode', state.breakdown === 'session');
