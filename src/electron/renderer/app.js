@@ -595,7 +595,7 @@ function rowTemplate(rowData) {
   if (platform) row.dataset.platform = platform;
   if (client) row.dataset.client = client;
   if (kind) row.dataset.kind = kind;
-  row.innerHTML = '<div class="row-head"><div class="row-name"><span class="row-mark"></span><div class="row-label"><span class="row-title"></span><span class="row-subtitle"></span><span class="row-detail"></span></div></div><div class="row-metrics"><div class="row-value"></div><div class="row-cost"></div></div></div><div class="bar"><div class="bar-fill"></div></div><div class="row-accordion"><div class="row-accordion-inner"></div></div>';
+  row.innerHTML = '<div class="row-head"><div class="row-name"><span class="row-mark"></span><div class="row-label"><span class="row-title"></span><span class="row-subtitle"></span><span class="row-detail"></span></div></div><div class="row-metrics"><div class="row-value"></div><div class="row-cost"></div></div></div><div class="row-body"><div class="bar"><div class="bar-fill"></div></div><div class="row-accordion"><div class="row-accordion-inner"></div></div></div>';
   row.querySelector('.row-title').textContent = name;
   row.querySelector('.row-subtitle').textContent = subtitle || '';
   row.querySelector('.row-detail').textContent = detail || '';
@@ -650,17 +650,19 @@ function updateRow(row, { name, subtitle, detail, value, cost, max, color, stale
     const missPct = inputTokens > 0 ? 100 - hitPct : 0;
     
     accordionInner.innerHTML = `
-      <div class="accordion-row">
-        <div class="accordion-label">${t('dashboard.tooltip.inputCacheHit')} <span class="accordion-pct">${hitPct}%</span></div>
-        <div class="accordion-value">${formatNumber(cacheRead)}</div>
-      </div>
-      <div class="accordion-row">
-        <div class="accordion-label">${t('dashboard.tooltip.inputCacheMiss')} <span class="accordion-pct">${missPct}%</span></div>
-        <div class="accordion-value">${formatNumber(cacheMiss)}</div>
-      </div>
-      <div class="accordion-row">
-        <div class="accordion-label">${t('dashboard.tooltip.output')}</div>
-        <div class="accordion-value">${formatNumber(output)}</div>
+      <div class="accordion-content">
+        <div class="accordion-row">
+          <div class="accordion-label">${t('dashboard.tooltip.inputCacheHit')} <span class="accordion-pct">${hitPct}%</span></div>
+          <div class="accordion-value">${formatNumber(cacheRead)}</div>
+        </div>
+        <div class="accordion-row">
+          <div class="accordion-label">${t('dashboard.tooltip.inputCacheMiss')} <span class="accordion-pct">${missPct}%</span></div>
+          <div class="accordion-value">${formatNumber(cacheMiss)}</div>
+        </div>
+        <div class="accordion-row">
+          <div class="accordion-label">${t('dashboard.tooltip.output')}</div>
+          <div class="accordion-value">${formatNumber(output)}</div>
+        </div>
       </div>
     `;
     row.classList.add('has-accordion');
@@ -2338,12 +2340,21 @@ function renderViewPreferences() {
       toggle.append(toggleIcon);
       toggle.addEventListener('click', () => {
         state.trendSettingsExpanded = !state.trendSettingsExpanded;
-        renderViewPreferences();
+        toggle.classList.toggle('is-expanded', state.trendSettingsExpanded);
+        toggle.setAttribute('aria-expanded', String(Boolean(state.trendSettingsExpanded)));
+        const container = document.getElementById('trendSettingsContainer');
+        if (container) container.classList.toggle('hidden', !state.trendSettingsExpanded);
       });
       actions.insertBefore(toggle, visibility);
-      if (state.trendSettingsExpanded) {
-        els.viewDisplayList.appendChild(renderTrendSettingsList());
-      }
+      
+      const listContainer = document.createElement('div');
+      listContainer.id = 'trendSettingsContainer';
+      listContainer.className = `accordion-animated-container${state.trendSettingsExpanded ? '' : ' hidden'}`;
+      const inner = document.createElement('div');
+      inner.className = 'accordion-animation-inner';
+      inner.appendChild(renderTrendSettingsList());
+      listContainer.appendChild(inner);
+      els.viewDisplayList.appendChild(listContainer);
     }
     if (id === 'status') {
       row.classList.add('has-subgroup');
@@ -2359,12 +2370,21 @@ function renderViewPreferences() {
       toggle.append(toggleIcon);
       toggle.addEventListener('click', () => {
         state.serviceProvidersExpanded = !state.serviceProvidersExpanded;
-        renderViewPreferences();
+        toggle.classList.toggle('is-expanded', state.serviceProvidersExpanded);
+        toggle.setAttribute('aria-expanded', String(Boolean(state.serviceProvidersExpanded)));
+        const container = document.getElementById('serviceProvidersContainer');
+        if (container) container.classList.toggle('hidden', !state.serviceProvidersExpanded);
       });
       actions.insertBefore(toggle, actions.firstChild);
-      if (state.serviceProvidersExpanded) {
-        els.viewDisplayList.appendChild(renderServiceProviderList());
-      }
+      
+      const listContainer = document.createElement('div');
+      listContainer.id = 'serviceProvidersContainer';
+      listContainer.className = `accordion-animated-container${state.serviceProvidersExpanded ? '' : ' hidden'}`;
+      const inner = document.createElement('div');
+      inner.className = 'accordion-animation-inner';
+      inner.appendChild(renderServiceProviderList());
+      listContainer.appendChild(inner);
+      els.viewDisplayList.appendChild(listContainer);
     }
   }
 }
@@ -3745,6 +3765,38 @@ function setupCursorAccountUI() {
   }
 }
 
+function initSettingsAnimationWrappers() {
+  const selectors = [
+    '.settings-section-details',
+    '.cursor-settings-details',
+    '.hub-mode-fields',
+    '.presence-feature-body',
+    '#cursorManualPanel',
+    '#opencodeManualPanel',
+    '#deepseekManualPanel'
+  ].join(', ');
+  
+  document.querySelectorAll(selectors).forEach(el => {
+    if (el.children.length === 1 && el.firstChild.classList?.contains('accordion-animation-inner')) return;
+    
+    const inner = document.createElement('div');
+    // Keep specific class for specific paddings, but add common class for animation
+    const innerSpecificClass = el.classList.contains('cursor-settings-details') 
+      ? 'cursor-settings-details-inner' 
+      : el.classList.contains('settings-section-details') 
+        ? 'settings-section-details-inner' 
+        : 'accordion-animation-inner';
+        
+    inner.className = `accordion-animation-inner ${innerSpecificClass}`;
+    while (el.firstChild) {
+      inner.appendChild(el.firstChild);
+    }
+    el.appendChild(inner);
+    el.classList.add('accordion-animated-container');
+  });
+}
+
+initSettingsAnimationWrappers();
 setupSettingsSections();
 setupCursorAccountUI();
 deliverTrayProviderIcons();
