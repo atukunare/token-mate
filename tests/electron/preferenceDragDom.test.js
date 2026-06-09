@@ -264,8 +264,14 @@ test('startup setting stays visible when login items are unsupported', () => {
 test('expanded settings sections keep content full width', () => {
   const css = readRendererFile('styles.css');
   const detailsRule = cssRule(css, '.settings-section-details');
-  assert.match(detailsRule, /padding:\s*2px 0 10px 4px/);
+  const innerRule = cssRule(css, '.settings-section-details-inner');
+  const firstChildRule = cssRule(css, '.settings-section-details-inner > :first-child');
+  const lastChildRule = cssRule(css, '.settings-section-details-inner > :last-child');
+  assert.match(innerRule, /padding-left:\s*4px/);
+  assert.match(firstChildRule, /padding-top:\s*2px/);
+  assert.match(lastChildRule, /padding-bottom:\s*10px/);
   assert.doesNotMatch(detailsRule, /padding:\s*[^;]*\s24px\b/);
+  assert.doesNotMatch(innerRule, /padding:\s*[^;]*\s24px\b/);
 });
 
 test('renderer applies the first visible view on cold startup only', () => {
