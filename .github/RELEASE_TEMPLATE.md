@@ -5,12 +5,15 @@
 ## What's changed
 
 ### Added
-- Added inline cache-hit breakdowns for tool and model rows, showing cache-hit input, cache-miss input, output tokens, and hit rates.
+- Added Appearance theme controls with Default, Obsidian, and Porcelain presets, custom interface colours, and per-tool vendor colour overrides for charts and lists.
+- Added detection-status tags to the tracked tool list, so Settings can show whether each enabled tool is active, waiting for data, or missing local data.
+- Added main-view persistence, so the widget reopens on the last selected view instead of always returning to the default view.
 
 ### Improved
-- Improved the existing Usage Dashboard with Top Models and Top Tools progress breakdowns, chart scaling fixes, a redesigned range selector, updated heatmap styling, and cleaner legend layout.
-- Smoothed settings accordion animations in the settings panel.
-- Updated bundled tokscale to 3.1.0, including Codex fork replay deduplication and Claude tool-result usage accounting.
+- Runs the today, month, and all-time tokscale scans concurrently, reducing refresh wait time when local usage data is large.
+- Stops idle live-dot pulsing and skips no-op number animations, keeping the widget calmer when values have not changed.
+- Localized the remaining main-view names and the breakdown toggle button.
+- Updated bundled tokscale to 3.1.2.
 
 ## Which file should I download?
 
@@ -45,12 +48,15 @@ open-source: https://github.com/junhoyeo/tokscale
 ## 更新内容
 
 ### 新增
-- 新增工具和模型行的内联缓存命中明细，可查看缓存命中输入、缓存未命中输入、输出 Token 与命中率。
+- 新增外观主题控制，可选择默认、黑曜、瓷白预设，自定义界面颜色，并为图表和列表里的各工具设置厂商色。
+- 新增已追踪工具的检测状态标签，可在设置中看到每个启用工具是正在检测、等待数据，还是缺少本地数据。
+- 新增主界面记忆功能，小组件重新打开时会回到上次选择的视图，不再总是回到默认视图。
 
 ### 改进
-- 改进已有的使用仪表板，加入常用模型和常用工具进度统计，并优化图表缩放、时间范围切换、热力图样式和图例布局。
-- 优化设置面板里的折叠区块动画。
-- 将内置 tokscale 更新到 3.1.0，包含 Codex fork replay 去重，以及 Claude tool-result 用量统计修正。
+- today、month、all-time 三个 tokscale 扫描现在会并行执行，本地用量数据较多时刷新等待更短。
+- 停止空闲时的实时指示点脉冲，并跳过没有变化的数字动画，让小组件在数值不变时更安静。
+- 补齐剩余主界面名称和明细切换按钮的本地化。
+- 将内置 tokscale 更新到 3.1.2。
 
 ## 应该下载哪个文件？
 
