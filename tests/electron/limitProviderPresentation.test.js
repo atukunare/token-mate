@@ -29,7 +29,12 @@ test('isCodexLiveAccount is false for other providers and unconfigured codex row
 test('isCodexLiveAccount only marks the local live login, not a synced remote device\'s', () => {
   const liveProvider = { provider: 'codex', status: 'ok', sourceDetail: 'app' };
   assert.equal(isCodexLiveAccount(liveProvider, { selectedIsRemote: false }), true);
-  assert.equal(isCodexLiveAccount(liveProvider, { selectedIsRemote: true }), false);
+  assert.equal(isCodexLiveAccount(liveProvider, { selectedIsRemote: true, hasLocalCandidate: false }), false);
+});
+
+test('isCodexLiveAccount stays marked when both devices are signed in but the remote record is selected', () => {
+  const liveProvider = { provider: 'codex', status: 'ok', sourceDetail: 'app' };
+  assert.equal(isCodexLiveAccount(liveProvider, { selectedIsRemote: true, hasLocalCandidate: true }), true);
 });
 
 const rendererDir = path.join(__dirname, '..', '..', 'src', 'electron', 'renderer');

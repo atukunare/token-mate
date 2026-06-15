@@ -99,7 +99,11 @@
   function isCodexLiveAccount(provider, provenance) {
     if (providerId(provider) !== 'codex') return false;
     if (statusId(provider) !== 'ok') return false;
-    if (provenance && provenance.selectedIsRemote) return false;
+    // "Active" means this device is signed into the account — not that the shown
+    // quota came from here. So hide it only when the selected record is remote
+    // AND this device has no login of its own for the account; when both devices
+    // are signed in, the remote record is selected but the badge still belongs.
+    if (provenance && provenance.selectedIsRemote && !provenance.hasLocalCandidate) return false;
     return sourceDetailId(provider) !== 'managed';
   }
 
