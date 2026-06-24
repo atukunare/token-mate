@@ -1,9 +1,12 @@
 <p align="right">
    <strong>EN</strong> | <a href="./README.zh-CN.md">简</a> | <a href="./README.zh-TW.md">繁</a>
 </p>
+
+> **Fork notice:** This project is an independent fork of [Javis603/token-monitor](https://github.com/Javis603/token-monitor), licensed under the [MIT License](LICENSE). Original work © [@Javis](https://github.com/Javis603).
+
 <div align="center">
-    <img src=".github/assets/app.png" alt="Token Monitor logo" width="120">
-    <h1>Token Monitor</h1>
+    <img src=".github/assets/app.png" alt="Token Mate logo" width="120">
+    <h1>Token Mate</h1>
 </div>
 
 <p align="center">
