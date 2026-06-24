@@ -47,7 +47,7 @@ function pickUsageTrayIconId(stats, contentMode = 'tokens', availableIconIds = [
 function createTray({ onToggle, onQuit, onSwitchToWindowMode }) {
   const { Tray, Menu } = require('electron');
   const tray = new Tray(buildTrayIcon());
-  tray.setToolTip('Token Monitor');
+  tray.setToolTip('Token Mate');
 
   tray.on('click', () => onToggle(tray));
   tray.on('right-click', () => {
@@ -56,7 +56,7 @@ function createTray({ onToggle, onQuit, onSwitchToWindowMode }) {
       { type: 'separator' },
       { label: 'Switch to Window Mode', click: () => onSwitchToWindowMode() },
       { type: 'separator' },
-      { label: 'Quit Token Monitor', click: () => onQuit() }
+      { label: 'Quit Token Mate', click: () => onQuit() }
     ]);
     tray.popUpContextMenu(menu);
   });
