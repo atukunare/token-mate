@@ -704,6 +704,21 @@ body.floating-bubble-collapsed-right .floating-bubble-tab {
   word-break: break-word;
 }
 .codex-login-output.hidden { display: none; }
+.deepseek-saved-panel {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.deepseek-saved-panel.hidden { display: none; }
+.deepseek-saved-preview {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(var(--overlay-rgb), 0.06);
+  font-size: 11px;
+  line-height: 1.4;
+  word-break: break-all;
+}
 .settings-note { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.45; }
 .settings-note code { padding: 1px 5px; border-radius: 3px; background: rgba(var(--overlay-rgb), 0.06); font-size: 10px; }
 .inline-link {
@@ -2575,6 +2590,9 @@ body.floating-bubble-collapsed-right .floating-bubble-tab {
 }
 .settings-note.error {
   color: var(--red);
+}
+.settings-note.success {
+  color: var(--green);
 }
 .client-checkbox.disabled,
 .tool-preference-row.disabled .tool-preference-name {

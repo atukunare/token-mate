@@ -441,6 +441,14 @@
                   <button id="deepseekLogoutButton" class="hidden" data-i18n="settings.deepseek.clearApiKey">Clear key</button>
                   <button id="deepseekRefreshButton" data-i18n="settings.common.refresh">Refresh</button>
                 </div>
+                <div id="deepseekSavedPanel" class="deepseek-saved-panel hidden">
+                  <p class="settings-note" data-i18n="settings.deepseek.savedNote">Your API key is saved on this device. DeepSeek only shows a new key once, so you can copy the saved key here anytime.</p>
+                  <code id="deepseekSavedPreview" class="deepseek-saved-preview"></code>
+                  <div class="settings-actions">
+                    <button id="deepseekCopyKeyButton" type="button" data-i18n="settings.deepseek.copyKey">Copy saved key</button>
+                    <button id="deepseekReplaceKeyButton" type="button" data-i18n="settings.deepseek.replaceKey">Replace key</button>
+                  </div>
+                </div>
                 <div id="deepseekManualPanel">
                   <p class="settings-note" data-i18n="settings.deepseek.note">Paste a DeepSeek API key. It stays on this device and is used only for the balance API.</p>
                   <input id="deepseekApiKeyInput" type="password" spellcheck="false" placeholder="sk-..." data-i18n-placeholder="settings.deepseek.apiKeyPlaceholder" />

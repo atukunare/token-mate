@@ -156,7 +156,7 @@ function normalizeInitialViewValue(value, allowed, fallback) {
   return allowed.has(raw) ? raw : fallback;
 }
 
-const state = { period: normalizeInitialViewValue(initialViewState.period, viewPeriodValues, 'today'), appUpdate: null, breakdown: normalizeInitialViewValue(initialViewState.breakdown, viewBreakdownValues, 'home'), viewSwitcherOpen: false, settings: null, stats: null, homeHistory: null, homeHistoryBusy: false, homeHistoryRequested: false, homeActivityScrollLeft: null, homeActivityFollowEnd: true, homeActivityResizeObserver: null, serviceStatus: null, serviceStatusBusy: false, serviceProvidersExpanded: false, trendSettingsExpanded: false, homeSettingsExpanded: false, serviceStatusTicker: null, refreshTimer: null, refreshBusy: false, refreshFeedbackTimer: null, currentTotal: 0, rowSignature: '', streamConnected: false, streamFailure: null, mode: 'idle', appInfo: null, tokscaleStatus: null, tokscaleCheck: null, tokscaleBusy: false, hubInfo: null, cursorAccount: { status: null, error: '' }, cursorAccountExpanded: false, codexAccountExpanded: false, codexAccountError: '', customPricingExpanded: false, opencodeProfileCount: 0, opencodeCookieExpanded: false, deepseekAccountExpanded: false, deepseekPendingCheckSince: 0, floatingBubble: initialFloatingBubble, suppressInitialNumberAnimation: window.__TOKEN_MONITOR_SUPPRESS_INITIAL_NUMBER_ANIMATION__ === true, openSession: null, detailSort: 'time', recordingWindowShortcut: false, windowShortcutInvalid: false };
+const state = { period: normalizeInitialViewValue(initialViewState.period, viewPeriodValues, 'today'), appUpdate: null, breakdown: normalizeInitialViewValue(initialViewState.breakdown, viewBreakdownValues, 'home'), viewSwitcherOpen: false, settings: null, stats: null, homeHistory: null, homeHistoryBusy: false, homeHistoryRequested: false, homeActivityScrollLeft: null, homeActivityFollowEnd: true, homeActivityResizeObserver: null, serviceStatus: null, serviceStatusBusy: false, serviceProvidersExpanded: false, trendSettingsExpanded: false, homeSettingsExpanded: false, serviceStatusTicker: null, refreshTimer: null, refreshBusy: false, refreshFeedbackTimer: null, currentTotal: 0, rowSignature: '', streamConnected: false, streamFailure: null, mode: 'idle', appInfo: null, tokscaleStatus: null, tokscaleCheck: null, tokscaleBusy: false, hubInfo: null, cursorAccount: { status: null, error: '' }, cursorAccountExpanded: false, codexAccountExpanded: false, codexAccountError: '', customPricingExpanded: false, opencodeProfileCount: 0, opencodeCookieExpanded: false, deepseekAccountExpanded: false, deepseekReplaceKey: false, deepseekPendingCheckSince: 0, floatingBubble: initialFloatingBubble, suppressInitialNumberAnimation: window.__TOKEN_MONITOR_SUPPRESS_INITIAL_NUMBER_ANIMATION__ === true, openSession: null, detailSort: 'time', recordingWindowShortcut: false, windowShortcutInvalid: false };
 state.settingsSections = Object.fromEntries(SETTINGS_SECTION_IDS.map((id) => [id, false]));
 const defaultAppearance = { glassOpacity: 68, glassBlur: 32, zoomFactor: 1, systemGlass: true, showLiveDot: true, showToolIcons: true, titleIconOnly: false, settingsInTitlebar: false };
 let preferenceDrag = null;
@@ -4402,30 +4402,24 @@ window.tokenMonitor.onStatsPush?.((payload) => {
 });
 
 function pickWorstProvider(stats, windowFilter) {
-  const providers = stats?.limits?.providers || [];
-  let worstProvider = null;
-  let worstRemaining = Infinity;
-  for (const provider of providers) {
-    if (provider.status !== 'ok' || provider.stale) continue;
-    for (const window of provider.windows || []) {
-      if (windowFilter && !windowFilter(window)) continue;
-      const remaining = Number(window.remainingPercent);
-      if (!Number.isFinite(remaining)) continue;
-      if (remaining < worstRemaining) {
-        worstRemaining = remaining;
-        worstProvider = provider;
-      }
-    }
-  }
-  return worstProvider;
+  const pair = window.TokenMonitorTrayText.pickWorstBarPair(stats, windowFilter || null);
+  return pair?.provider || null;
 }
 
 function pickWorstSessionProvider(stats) {
-  return pickWorstProvider(stats, (window) => window.kind === 'session');
+  return pickBarPairForTrayMode(stats, 'barsSession')?.provider || null;
 }
 
 function pickWorstWeeklyProvider(stats) {
-  return pickWorstProvider(stats, (window) => window.kind === 'weekly');
+  return pickBarPairForTrayMode(stats, 'barsWeekly')?.provider || null;
+}
+
+function pickBarPairForTrayMode(stats, mode) {
+  return window.TokenMonitorTrayText.pickBarPairForTrayMode(stats, mode);
+}
+
+function limitWindowEligible(window) {
+  return window.TokenMonitorTrayText.limitWindowEligible(window);
 }
 
 function roundedRectPath(ctx, x, y, w, h, r) {
@@ -4441,16 +4435,21 @@ function roundedRectPath(ctx, x, y, w, h, r) {
 
 const trayProviderImages = {};
 
-function renderBarsIcon(stats, height = 44, picker = pickWorstProvider, colors = {}) {
+function trayBarWindowsForProvider(provider, windowFilter = null) {
+  const windows = (provider?.windows || [])
+    .filter(limitWindowEligible)
+    .filter((window) => !windowFilter || windowFilter(window))
+    .sort((a, b) => Number(a.remainingPercent) - Number(b.remainingPercent));
+  return [windows[0] || null, windows[1] || null];
+}
+
+function renderBarsIconFromPair(pick, height = 44, colors = {}, options = {}) {
+  if (!pick?.firstWindow) return null;
   const trackColor = colors.track || 'rgba(0, 0, 0, 0.32)';
   const fillColor = colors.fill || 'rgba(0, 0, 0, 1)';
-  const provider = picker(stats);
-  if (!provider) return null;
-  const session = (provider.windows || []).find((w) => w.kind === 'session');
-  const weekly = (provider.windows || []).find((w) => w.kind === 'weekly');
-  const providerImage = trayProviderImages[provider.provider];
+  const providerImage = trayProviderImages[pick.provider.provider];
   const { trayBarFillWidth, trayBarsLayout } = window.TokenMonitorTrayBars;
-  const layout = trayBarsLayout(height);
+  const layout = trayBarsLayout(height, { contentOnly: options.contentOnly === true });
 
   const canvas = document.createElement('canvas');
   canvas.width = layout.width;
@@ -4458,7 +4457,7 @@ function renderBarsIcon(stats, height = 44, picker = pickWorstProvider, colors =
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, layout.width, layout.height);
 
-  if (providerImage) {
+  if (providerImage && !options.contentOnly) {
     ctx.drawImage(providerImage, layout.padX, layout.iconY, layout.iconSize, layout.iconSize);
   }
 
@@ -4468,7 +4467,6 @@ function renderBarsIcon(stats, height = 44, picker = pickWorstProvider, colors =
     ctx.fill();
     const fillW = trayBarFillWidth(percent, layout.barsWidth);
     if (!fillW) return;
-    // Clip-to-track + flat fillRect: a rounded rect's tiny corners get lost when the icon is downscaled into the menubar.
     ctx.save();
     roundedRectPath(ctx, layout.barsX, y, layout.barsWidth, layout.barHeight, layout.radius);
     ctx.clip();
@@ -4477,9 +4475,20 @@ function renderBarsIcon(stats, height = 44, picker = pickWorstProvider, colors =
     ctx.restore();
   }
 
-  drawBar(layout.barsStartY, Number(session?.remainingPercent));
-  drawBar(layout.barsStartY + layout.barHeight + layout.barGap, Number(weekly?.remainingPercent));
+  const secondPercent = pick.secondWindow
+    ? Number(pick.secondWindow.remainingPercent)
+    : Number(pick.firstWindow.remainingPercent);
+  drawBar(layout.barsStartY, Number(pick.firstWindow.remainingPercent));
+  drawBar(layout.barsStartY + layout.barHeight + layout.barGap, secondPercent);
   return canvas.toDataURL('image/png');
+}
+
+function renderBarsIcon(stats, height = 44, picker = pickWorstProvider, colors = {}, options = {}) {
+  const provider = picker(stats);
+  if (!provider) return null;
+  const [firstWindow, secondWindow] = trayBarWindowsForProvider(provider);
+  if (!firstWindow) return null;
+  return renderBarsIconFromPair({ provider, firstWindow, secondWindow }, height, colors, options);
 }
 
 function pickConfiguredSessionProviders(stats, configOrder) {
@@ -4508,7 +4517,14 @@ function renderAllSessionsIcon(stats, height = 44, configOrder, colors = {}, opt
   const picks = pickConfiguredSessionProviders(stats, configOrder);
   if (picks.length === 0) return null;
   // Only one tool has session data → fall back to that tool's session+weekly view.
-  if (picks.length === 1) return renderBarsIcon(stats, height, () => picks[0].provider, colors);
+  if (picks.length === 1) {
+    const weekly = (picks[0].provider.windows || []).find((window) => window.kind === 'weekly' && limitWindowEligible(window));
+    return renderBarsIconFromPair({
+      provider: picks[0].provider,
+      firstWindow: picks[0].session,
+      secondWindow: weekly || null
+    }, height, colors, options);
+  }
 
   const { trayBarFillWidth, trayBarsLayout } = window.TokenMonitorTrayBars;
   const layout = trayBarsLayout(height, { contentOnly: options.contentOnly === true });
@@ -4542,15 +4558,23 @@ function renderAllSessionsIcon(stats, height = 44, configOrder, colors = {}, opt
 
 function barsDataUrlForMode(mode, size = 44, colors, options = {}) {
   if (mode === 'barsAllSessions') return renderAllSessionsIcon(state.stats, size, configuredLimitProviderOrder(), colors, options);
-  const pickers = { barsSession: pickWorstSessionProvider, barsWeekly: pickWorstWeeklyProvider };
-  return renderBarsIcon(state.stats, size, pickers[mode] || pickWorstProvider, colors);
+  const pick = pickBarPairForTrayMode(state.stats, mode);
+  if (!pick) return null;
+  return renderBarsIconFromPair(pick, size, colors, options);
+}
+
+function trayBarColors() {
+  const dark = Boolean(window.matchMedia?.('(prefers-color-scheme: dark)')?.matches);
+  return dark
+    ? { track: 'rgba(255, 255, 255, 0.35)', fill: 'rgba(255, 255, 255, 0.95)' }
+    : { track: 'rgba(0, 0, 0, 0.32)', fill: 'rgba(0, 0, 0, 1)' };
 }
 
 async function maybeUpdateBarsIcon() {
   const mode = state.settings?.trayContent;
   if (mode !== 'bars' && mode !== 'barsSession' && mode !== 'barsWeekly' && mode !== 'barsAllSessions') return;
   if (!window.tokenMonitor.setTrayIcons) return;
-  const dataUrl = barsDataUrlForMode(mode, 44);
+  const dataUrl = barsDataUrlForMode(mode, 44, trayBarColors(), { contentOnly: true });
   if (!dataUrl) return;
   try { await window.tokenMonitor.setTrayIcons({ [mode]: dataUrl }); } catch (_) {}
 }
@@ -4736,29 +4760,47 @@ function renderDeepseekStatus() {
   const openBtn = document.getElementById('deepseekOpenBrowser');
   const logoutBtn = document.getElementById('deepseekLogoutButton');
   const refreshBtn = document.getElementById('deepseekRefreshButton');
+  const savedPanel = document.getElementById('deepseekSavedPanel');
+  const savedPreview = document.getElementById('deepseekSavedPreview');
+  const replaceBtn = document.getElementById('deepseekReplaceKeyButton');
   const manualPanel = document.getElementById('deepseekManualPanel');
   const errorEl = document.getElementById('deepseekErrorMessage');
   if (!statusEl || !openBtn || !logoutBtn || !refreshBtn || !manualPanel || !errorEl) return;
 
   errorEl.classList.add('hidden');
+  errorEl.classList.remove('success');
   errorEl.textContent = '';
 
   const source = state.settings?.deepseekApiKeySource || '';
+  const configured = Boolean(state.settings?.deepseekApiKeyConfigured);
+  const savedInSettings = configured && source === 'settings';
   const provider = deepseekProviderForAccount();
   const linked = deepseekAccountLinked();
-  if (linked) {
-    setCursorStatusText(statusEl, source === 'env' ? t('settings.deepseek.statusEnv') : t('settings.deepseek.statusSet'));
-  } else if (provider?.status === 'unauthorized') {
+  if (provider?.status === 'unauthorized') {
     setCursorStatusText(statusEl, t('settings.deepseek.statusInvalid'));
-  } else if (state.settings?.deepseekApiKeyConfigured) {
+  } else if (savedInSettings || linked) {
+    setCursorStatusText(statusEl, source === 'env' ? t('settings.deepseek.statusEnv') : t('settings.deepseek.statusSet'));
+  } else if (configured) {
     setCursorStatusText(statusEl, t('settings.common.checking'));
   } else {
     setCursorStatusText(statusEl, t('settings.deepseek.statusNotSet'));
   }
-  manualPanel.classList.toggle('hidden', linked);
-  openBtn.classList.toggle('hidden', linked);
-  logoutBtn.classList.toggle('hidden', !linked || source !== 'settings');
-  refreshBtn.classList.toggle('hidden', !linked);
+
+  if (savedPanel) {
+    savedPanel.classList.toggle('hidden', !savedInSettings);
+    if (savedPreview) savedPreview.textContent = state.settings?.deepseekApiKeyPreview || '';
+  }
+  if (replaceBtn) {
+    replaceBtn.textContent = state.deepseekReplaceKey
+      ? t('settings.deepseek.cancelReplace')
+      : t('settings.deepseek.replaceKey');
+  }
+
+  const showManual = !savedInSettings || state.deepseekReplaceKey || provider?.status === 'unauthorized';
+  manualPanel.classList.toggle('hidden', !showManual);
+  openBtn.classList.toggle('hidden', savedInSettings && !showManual);
+  logoutBtn.classList.toggle('hidden', !savedInSettings);
+  refreshBtn.classList.toggle('hidden', !configured);
   renderSettingsSummaries();
 }
 
@@ -5355,6 +5397,7 @@ function setupCursorAccountUI() {
 
     document.getElementById('deepseekLogoutButton').addEventListener('click', async () => {
       await saveSettings({ deepseekApiKey: '' });
+      state.deepseekReplaceKey = false;
       clearDeepseekPendingCheck();
       clearDeepseekProviderStatus();
       renderDeepseekStatus();
@@ -5365,28 +5408,49 @@ function setupCursorAccountUI() {
       await refreshStats({ force: true });
     });
 
+    document.getElementById('deepseekCopyKeyButton')?.addEventListener('click', async () => {
+      const result = await window.tokenMonitor.deepseek?.getSavedKey?.();
+      if (!result?.ok || !result.key) return;
+      await copyToClipboard(result.key, document.getElementById('deepseekCopyKeyButton'));
+    });
+
+    document.getElementById('deepseekReplaceKeyButton')?.addEventListener('click', () => {
+      state.deepseekReplaceKey = !state.deepseekReplaceKey;
+      renderDeepseekStatus();
+      if (state.deepseekReplaceKey) {
+        document.getElementById('deepseekApiKeyInput')?.focus();
+      }
+    });
+
     document.getElementById('deepseekApiKeySubmit').addEventListener('click', async () => {
       const input = document.getElementById('deepseekApiKeyInput');
       const errorEl = document.getElementById('deepseekErrorMessage');
       errorEl.classList.add('hidden');
       if (!String(input.value || '').trim()) {
-        errorEl.textContent = t('settings.deepseek.statusNotSet');
-        errorEl.classList.remove('hidden');
+        errorEl.textContent = t('settings.deepseek.invalidKeyFormat');
+        errorEl.classList.remove('hidden', 'success');
+        errorEl.classList.add('error');
         return;
       }
       try {
         markDeepseekKeyCheckPending();
         await saveSettings({ deepseekApiKey: input.value });
         input.value = '';
+        state.deepseekReplaceKey = false;
         renderDeepseekStatus();
+        errorEl.textContent = t('settings.deepseek.saveSuccess');
+        errorEl.classList.remove('hidden', 'error');
+        errorEl.classList.add('success');
         await refreshStats({ force: true });
+        clearDeepseekPendingCheck();
         if (deepseekAccountLinked()) setDeepseekAccountExpanded(false);
         else setDeepseekAccountExpanded(true);
         renderDeepseekStatus();
       } catch (err) {
         clearDeepseekPendingCheck();
         errorEl.textContent = t('settings.deepseek.saveFailed', { message: err.message });
-        errorEl.classList.remove('hidden');
+        errorEl.classList.remove('hidden', 'success');
+        errorEl.classList.add('error');
       }
     });
   }

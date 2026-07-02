@@ -115,22 +115,24 @@ test('DeepSeek account panel provides a first-class API key entry', () => {
   const details = html.match(/<div id="deepseekSettingsDetails"[\s\S]*?<div id="deepseekErrorMessage" class="settings-note error hidden"><\/div>/)?.[0] || '';
   assert.match(details, /<button id="deepseekOpenBrowser"[\s\S]*data-i18n="settings\.deepseek\.openBrowser">/);
   assert.match(details, /<button id="deepseekLogoutButton" class="hidden" data-i18n="settings\.deepseek\.clearApiKey">/);
+  assert.match(details, /<button id="deepseekCopyKeyButton"[\s\S]*data-i18n="settings\.deepseek\.copyKey">/);
   assert.match(details, /<input id="deepseekApiKeyInput" type="password"[\s\S]*data-i18n-placeholder="settings\.deepseek\.apiKeyPlaceholder"/);
   assert.match(details, /<button id="deepseekApiKeySubmit"[\s\S]*data-i18n="settings\.deepseek\.saveApiKey">/);
 
   const app = readRendererFile('app.js');
   const setupBody = functionBodyBeforeMarker(app, 'setupCursorAccountUI', '\nsetupCursorAccountUI();');
   assert.match(setupBody, /window\.tokenMonitor\.openExternal\('https:\/\/platform\.deepseek\.com\/api_keys'\)/);
+  assert.match(setupBody, /window\.tokenMonitor\.deepseek\?\.getSavedKey/);
   assert.match(setupBody, /saveSettings\(\{ deepseekApiKey: input\.value \}\)/);
   assert.match(setupBody, /saveSettings\(\{ deepseekApiKey: '' \}\)/);
   assert.match(setupBody, /refreshStats\(\{ force: true \}\)/);
   const renderBody = functionBody(app, 'renderDeepseekStatus', 'renderOpenCodeProfiles');
-  assert.match(renderBody, /const openBtn = document\.getElementById\('deepseekOpenBrowser'\);/);
+  assert.match(renderBody, /const savedPanel = document\.getElementById\('deepseekSavedPanel'\);/);
   assert.match(renderBody, /const linked = deepseekAccountLinked\(\);/);
-  assert.match(renderBody, /manualPanel\.classList\.toggle\('hidden', linked\)/);
-  assert.match(renderBody, /openBtn\.classList\.toggle\('hidden', linked\)/);
-  assert.match(renderBody, /logoutBtn\.classList\.toggle\('hidden', !linked \|\| source !== 'settings'\)/);
-  assert.match(renderBody, /refreshBtn\.classList\.toggle\('hidden', !linked\)/);
+  assert.match(renderBody, /savedPanel\.classList\.toggle\('hidden', !savedInSettings\)/);
+  assert.match(renderBody, /manualPanel\.classList\.toggle\('hidden', !showManual\)/);
+  assert.match(renderBody, /logoutBtn\.classList\.toggle\('hidden', !savedInSettings\)/);
+  assert.match(renderBody, /refreshBtn\.classList\.toggle\('hidden', !configured\)/);
 });
 
 test('DeepSeek account linked state requires a validated API key', () => {
@@ -151,16 +153,17 @@ test('DeepSeek account linked state requires a validated API key', () => {
   const renderBody = functionBody(app, 'renderDeepseekStatus', 'renderOpenCodeProfiles');
   assert.match(
     renderBody,
-    /if \(linked\) \{[\s\S]*settings\.deepseek\.statusSet[\s\S]*\} else if \(provider\?\.status === 'unauthorized'\) \{/,
-    'validated ok should be handled before invalid or pending states'
+    /if \(provider\?\.status === 'unauthorized'\) \{[\s\S]*settings\.deepseek\.statusInvalid[\s\S]*\} else if \(savedInSettings \|\| linked\) \{/,
+    'invalid should be handled before saved or linked states'
   );
+  assert.match(renderBody, /deepseekApiKeyPreview/);
 });
 
 test('DeepSeek key changes invalidate stale provider status before re-checking', () => {
   const app = readRendererFile('app.js');
   const setupBody = functionBodyBeforeMarker(app, 'setupCursorAccountUI', '\nsetupCursorAccountUI();');
-  assert.match(setupBody, /markDeepseekKeyCheckPending\(\);[\s\S]*await saveSettings\(\{ deepseekApiKey: input\.value \}\);[\s\S]*renderDeepseekStatus\(\);[\s\S]*await refreshStats\(\{ force: true \}\);/);
-  assert.match(setupBody, /await saveSettings\(\{ deepseekApiKey: '' \}\);[\s\S]*clearDeepseekPendingCheck\(\);[\s\S]*clearDeepseekProviderStatus\(\);[\s\S]*renderDeepseekStatus\(\);/);
+  assert.match(setupBody, /markDeepseekKeyCheckPending\(\);[\s\S]*await saveSettings\(\{ deepseekApiKey: input\.value \}\);[\s\S]*renderDeepseekStatus\(\);[\s\S]*await refreshStats\(\{ force: true \}\);[\s\S]*clearDeepseekPendingCheck\(\);/);
+  assert.match(setupBody, /await saveSettings\(\{ deepseekApiKey: '' \}\);[\s\S]*state\.deepseekReplaceKey = false;[\s\S]*clearDeepseekPendingCheck\(\);[\s\S]*clearDeepseekProviderStatus\(\);[\s\S]*renderDeepseekStatus\(\);/);
 
   const pendingBody = functionBody(app, 'markDeepseekKeyCheckPending', 'clearDeepseekPendingCheck');
   assert.match(pendingBody, /state\.deepseekPendingCheckSince = Date\.now\(\);/);

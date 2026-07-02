@@ -5,7 +5,7 @@ const crypto = require('node:crypto');
 const os = require('node:os');
 const path = require('node:path');
 const { app, BrowserWindow, globalShortcut, ipcMain, nativeImage, screen, session, shell } = require('electron');
-const { defaultDeviceId, generateHubSecret, lanIpv4Addresses, loadDotEnv, pidFilePath, sharedDataDir } = require('../shared/config');
+const { defaultDeviceId, generateHubSecret, lanIpv4Addresses, loadDotEnv, pidFilePath, sharedDataDir, writeJsonAtomic } = require('../shared/config');
 const { appVersion } = require('../shared/appVersion');
 const { DEFAULT_CLIENTS, clientsCsvForSetting } = require('../shared/clientTracking');
 const { startCollector, lookupModelPricing } = require('../shared/collector');
@@ -210,8 +210,115 @@ function normalizeDeepSeekApiKey(value) {
   return deepseekToken({}, String(value || ''));
 }
 
+function maskSecret(value) {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  if (text.length <= 8) return '••••••••';
+  return `${text.slice(0, 7)}…${text.slice(-4)}`;
+}
+
+function legacySharedDataDir(homeDir = os.homedir()) {
+  const legacyName = 'Token Monitor';
+  if (process.platform === 'darwin') return path.join(homeDir, 'Library', 'Application Support', legacyName);
+  if (process.platform === 'win32') {
+    return path.join(process.env.APPDATA || path.join(homeDir, 'AppData', 'Roaming'), legacyName);
+  }
+  return path.join(process.env.XDG_CONFIG_HOME || path.join(homeDir, '.config'), legacyName);
+}
+
+function tryReadLegacySettings() {
+  const legacyPath = path.join(legacySharedDataDir(), 'settings.json');
+  try {
+    return JSON.parse(fs.readFileSync(legacyPath, 'utf8'));
+  } catch (_) {
+    return null;
+  }
+}
+
+function mergeLegacySecrets(merged, legacySaved) {
+  if (!legacySaved || typeof legacySaved !== 'object') return merged;
+  if (!merged.deepseekApiKey && legacySaved.deepseekApiKey) merged.deepseekApiKey = legacySaved.deepseekApiKey;
+  if (!merged.opencodeCookie && legacySaved.opencodeCookie) merged.opencodeCookie = legacySaved.opencodeCookie;
+  const mergedProfiles = merged.opencodeProfiles && typeof merged.opencodeProfiles === 'object' ? merged.opencodeProfiles : {};
+  const legacyProfiles = legacySaved.opencodeProfiles && typeof legacySaved.opencodeProfiles === 'object' ? legacySaved.opencodeProfiles : {};
+  if (!Object.keys(mergedProfiles).length && Object.keys(legacyProfiles).length) {
+    merged.opencodeProfiles = legacyProfiles;
+  }
+  const mergedAccounts = Array.isArray(merged.codexManagedAccounts) ? merged.codexManagedAccounts : [];
+  const legacyAccounts = Array.isArray(legacySaved.codexManagedAccounts) ? legacySaved.codexManagedAccounts : [];
+  if (!mergedAccounts.length && legacyAccounts.length) merged.codexManagedAccounts = legacyAccounts;
+  return merged;
+}
+
+function rewriteLegacyCodexAccountPaths(accounts, currentUserDataDir, legacyUserDataDir) {
+  if (!Array.isArray(accounts) || !currentUserDataDir || !legacyUserDataDir) return accounts;
+  const currentRoot = path.resolve(currentUserDataDir);
+  const legacyRoot = path.resolve(legacyUserDataDir);
+  if (currentRoot === legacyRoot) return accounts;
+  return accounts.map((account) => {
+    if (!account || typeof account !== 'object') return account;
+    const rewritePath = (value) => {
+      const text = String(value || '');
+      if (!text.startsWith(legacyRoot)) return text;
+      return path.join(currentRoot, path.relative(legacyRoot, text));
+    };
+    return {
+      ...account,
+      homePath: rewritePath(account.homePath),
+      authPath: rewritePath(account.authPath)
+    };
+  });
+}
+
+function migrateLegacyManagedCodexHomes(currentUserDataDir, legacyUserDataDir) {
+  const legacyRoot = path.join(legacyUserDataDir, 'managed-codex-homes');
+  const currentRoot = path.join(currentUserDataDir, 'managed-codex-homes');
+  let entries = [];
+  try { entries = fs.readdirSync(legacyRoot, { withFileTypes: true }); } catch (_) { return; }
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    const source = path.join(legacyRoot, entry.name);
+    const target = path.join(currentRoot, entry.name);
+    if (fs.existsSync(target)) continue;
+    try {
+      fs.mkdirSync(currentRoot, { recursive: true });
+      fs.cpSync(source, target, { recursive: true });
+    } catch (error) {
+      console.warn(`[settings] Could not migrate Codex home ${entry.name}: ${error.message}`);
+    }
+  }
+}
+
+function secretsSnapshot(value) {
+  return JSON.stringify({
+    deepseekApiKey: value?.deepseekApiKey || '',
+    opencodeCookie: value?.opencodeCookie || '',
+    opencodeProfiles: value?.opencodeProfiles || {},
+    codexManagedAccounts: value?.codexManagedAccounts || []
+  });
+}
+
+function applyLegacySettingsMigration(merged, { currentUserDataDir, legacyUserDataDir, legacySaved }) {
+  if (!legacySaved) return false;
+  const before = secretsSnapshot(merged);
+  mergeLegacySecrets(merged, legacySaved);
+  merged.codexManagedAccounts = rewriteLegacyCodexAccountPaths(
+    normalizeCodexManagedAccounts(merged.codexManagedAccounts),
+    currentUserDataDir,
+    legacyUserDataDir
+  );
+  migrateLegacyManagedCodexHomes(currentUserDataDir, legacyUserDataDir);
+  return secretsSnapshot(merged) !== before;
+}
+
 function currentDeepSeekApiKey() {
   return settings?.deepseekApiKey || deepseekToken(process.env);
+}
+
+function currentDeepSeekApiKeySource() {
+  if (settings?.deepseekApiKey) return 'settings';
+  if (deepseekToken(process.env)) return 'env';
+  return '';
 }
 
 let codexLoginInFlight = false;
@@ -475,6 +582,10 @@ function floatingBubblePayload() {
 function ensureSettingsLoaded() {
   if (settings) return settings;
   settings = readSettings();
+  if (settings.__legacyMerged) {
+    delete settings.__legacyMerged;
+    saveSettings();
+  }
   rendererViewState = normalizeInitialRendererViewState(settings.lastViewState, rendererViewState);
   return settings;
 }
@@ -749,11 +860,15 @@ function normalizeCurrencyOverrides(value) {
 
 function readSettings() {
   settingsPath = path.join(app.getPath('userData'), 'settings.json');
+  const currentUserDataDir = app.getPath('userData');
+  const legacyUserDataDir = legacySharedDataDir();
+  const legacySaved = tryReadLegacySettings();
   try {
     const defaults = defaultSettings();
     const saved = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
     if (!saved.secret && defaults.secret) delete saved.secret;
     const merged = { ...defaults, ...saved };
+    const legacyMerged = applyLegacySettingsMigration(merged, { currentUserDataDir, legacyUserDataDir, legacySaved });
     // Migrate older configs that predate hubMode: infer from hubUrl.
     if (saved.hubMode === undefined) {
       merged.hubMode = (saved.hubUrl && String(saved.hubUrl).trim()) ? 'client' : 'local';
@@ -815,18 +930,25 @@ function readSettings() {
       merged.opencodeProfiles = { default: { cookie: merged.opencodeCookie, enabled: true } };
     }
     Object.assign(merged, normalizeTrayModeSettings(merged));
+    merged.__legacyMerged = legacyMerged;
     return normalizeWindowBehaviorSettings(merged);
   }
-  catch (_error) {
+  catch (error) {
+    console.warn(`[settings] Could not read ${settingsPath}: ${error.message}`);
     const defaults = defaultSettings();
+    const legacyMerged = applyLegacySettingsMigration(defaults, { currentUserDataDir, legacyUserDataDir, legacySaved });
     Object.assign(defaults, normalizeTrayModeSettings(defaults));
+    defaults.__legacyMerged = legacyMerged;
     return normalizeWindowBehaviorSettings(defaults);
   }
 }
 
 function saveSettings() {
   fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
-  fs.writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`, 'utf8');
+  writeJsonAtomic(settingsPath, settings);
+  if (process.platform !== 'win32') {
+    try { fs.chmodSync(settingsPath, 0o600); } catch (_) { /* best-effort */ }
+  }
 }
 
 function loginItemEnabledHere() {
@@ -1513,14 +1635,12 @@ function redactOpencodeProfilesForRenderer(profiles) {
 }
 
 function settingsForRenderer() {
-  const deepseekApiKeySource = settings?.deepseekApiKey
-    ? 'settings'
-    : deepseekToken(process.env)
-      ? 'env'
-      : '';
+  const deepseekApiKeySource = currentDeepSeekApiKeySource();
+  const savedDeepSeekKey = settings?.deepseekApiKey || '';
   return {
     ...settings,
     deepseekApiKey: '',
+    deepseekApiKeyPreview: savedDeepSeekKey ? maskSecret(savedDeepSeekKey) : '',
     // Never ship OpenCode session cookies to the renderer; the UI only needs to
     // know whether a cookie is configured, not its value.
     opencodeCookie: settings?.opencodeCookie ? 'set' : '',
@@ -2220,6 +2340,12 @@ app.whenReady().then(() => {
   rateRefreshTimer = setInterval(() => { refreshExchangeRates(); }, 6 * 60 * 60 * 1000);
   setTimeout(() => { checkTokscaleNpm({ silent: true }); }, 2000);
   ipcMain.handle('settings:get', () => settingsForRenderer());
+  ipcMain.handle('deepseek:getSavedKey', () => {
+    if (currentDeepSeekApiKeySource() !== 'settings') return { ok: false };
+    const key = settings?.deepseekApiKey || '';
+    if (!key) return { ok: false };
+    return { ok: true, preview: maskSecret(key), key };
+  });
   ipcMain.handle('pricing:lookup', async (_event, modelId) => {
     try {
       return { ok: true, result: await lookupModelPricing(modelId) };
@@ -2253,7 +2379,14 @@ app.whenReady().then(() => {
     delete normalizedPatch.codexManagedAccounts;
     delete normalizedPatch.customModelPricing;
     if (patch.clients !== undefined) normalizedPatch.clients = clientsCsvForSetting(patch.clients, '');
-    if (patch.deepseekApiKey !== undefined) normalizedPatch.deepseekApiKey = normalizeDeepSeekApiKey(patch.deepseekApiKey);
+    if (patch.deepseekApiKey !== undefined) {
+      const rawDeepSeekApiKey = String(patch.deepseekApiKey || '');
+      const normalizedDeepSeekApiKey = normalizeDeepSeekApiKey(patch.deepseekApiKey);
+      if (rawDeepSeekApiKey.trim() && !normalizedDeepSeekApiKey) {
+        throw new Error('Invalid DeepSeek API key format');
+      }
+      normalizedPatch.deepseekApiKey = normalizedDeepSeekApiKey;
+    }
     settings = normalizeWindowBehaviorSettings({
       ...settings,
       ...normalizedPatch,
@@ -2454,6 +2587,7 @@ app.whenReady().then(() => {
   });
   ipcMain.handle('tray:setIcons', (_event, icons) => {
     if (!icons || typeof icons !== 'object') return false;
+    const barModes = new Set(['bars', 'barsSession', 'barsWeekly', 'barsAllSessions']);
     for (const [id, dataUrl] of Object.entries(icons)) {
       if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/png')) continue;
       const img = nativeImage.createFromDataURL(dataUrl);
@@ -2461,7 +2595,9 @@ app.whenReady().then(() => {
       // Resize by height only; aspect ratio is preserved, so wide bar-style
       // icons keep their width while square provider icons stay 20x20.
       const sized = img.resize({ height: 20, quality: 'best' });
-      if (process.platform === 'darwin') sized.setTemplateImage(true);
+      // Bar composites carry subtle track/fill contrast; template mode collapses
+      // them into a flat glyph that reads as "icon only" in the macOS menu bar.
+      if (process.platform === 'darwin' && !barModes.has(id)) sized.setTemplateImage(true);
       providerTrayIcons[id] = sized;
     }
     updateTrayDisplay();

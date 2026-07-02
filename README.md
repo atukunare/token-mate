@@ -2,6 +2,15 @@
    <strong>EN</strong> | <a href="./README.zh-CN.md">简</a> | <a href="./README.zh-TW.md">繁</a>
 </p>
 
+## Agent Entry
+
+This project keeps `README.md` and `CHANGELOG.md` as the root canonical documents.
+
+- Global agent rules: `/Users/mac/wiki/AGENTS.md`
+- Project knowledge: `/Users/mac/wiki/projects/ai-token-monitor.md`
+- Changelog/roadmap: `CHANGELOG.md`
+- Scope: search and edit inside this project by default; open other projects or wiki files only by exact path when needed.
+
 > **Fork notice:** This project is an independent fork of [Javis603/token-monitor](https://github.com/Javis603/token-monitor), licensed under the [MIT License](LICENSE). Original work © [@Javis](https://github.com/Javis603).
 
 <div align="center">

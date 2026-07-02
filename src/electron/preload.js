@@ -92,6 +92,9 @@ contextBridge.exposeInMainWorld('tokenMonitor', {
       return () => ipcRenderer.removeListener('codex:loginOutput', handler);
     }
   },
+  deepseek: {
+    getSavedKey: () => ipcRenderer.invoke('deepseek:getSavedKey')
+  },
   minimize: () => ipcRenderer.send('window:minimize'),
   close: () => ipcRenderer.send('window:close')
 });
