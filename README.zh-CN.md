@@ -1,5 +1,5 @@
 <p align="right">
-   <a href="./README.md">EN</a> | <strong>简</strong> | <a href="./README.zh-TW.md">繁</a>
+   <a href="./README.md">EN</a> | <strong>简</strong> | <a href="./README.zh-TW.md">繁</a> | <a href="./README.ko.md">KO</a>
 </p>
 <div align="center">
     <img src=".github/assets/app.png" alt="Token Mate logo" width="120">
@@ -16,7 +16,6 @@
     <img src="https://img.shields.io/badge/Windows-10%2B-0078D4?style=flat-square" alt="Windows 10 或更新" />
     <img src="https://img.shields.io/badge/macOS-14%2B-0A84FF?style=flat-square&logo=apple&logoColor=white" alt="macOS 14 或更新" />
     <a href="worker/README.md"><img src="https://img.shields.io/badge/Worker-Cloudflare-F38020?style=flat-square&logo=cloudflare&logoColor=white" alt="Cloudflare Worker" /></a>
-    <a href="https://discord.gg/HmdNVVvw5P"><img src="https://img.shields.io/discord/1344259784219689031?color=5865F2&label=Discord&logo=discord&logoColor=white&style=flat-square" alt="Discord"></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-A855F7?style=flat-square" alt="许可证：MIT" /></a>
 </p>
 
@@ -248,9 +247,9 @@ hub 与代理只传输汇总字段:
 ## 贡献者
 
 - [@atukunare](https://github.com/atukunare) — 维护者
-- [Anthropic](https://www.anthropic.com/) — Claude / Claude Code
-- [OpenAI](https://openai.com/) — Codex
-- [Cursor](https://cursor.com/) — Cursor
+- 集成平台（非 GitHub 代码贡献者）：[Anthropic](https://www.anthropic.com/) (Claude)、[OpenAI](https://openai.com/) (Codex)、[Cursor](https://cursor.com/)
+
+详见 [CONTRIBUTORS.md](CONTRIBUTORS.md) 与 [GitHub Contributors graph](https://github.com/atukunare/token-mate/graphs/contributors)。
 
 ## Credits
 

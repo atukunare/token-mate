@@ -1,0 +1,284 @@
+<p align="right">
+   <a href="./README.md">EN</a> | <a href="./README.zh-CN.md">简</a> | <a href="./README.zh-TW.md">繁</a> | <strong>KO</strong>
+</p>
+<div align="center">
+    <img src=".github/assets/app.png" alt="Token Mate logo" width="120">
+    <h1>Token Mate</h1>
+</div>
+
+<p align="center">
+    <em>모든 AI 코딩 도구의 실시간 사용량을 한 화면에서, 여러 기기에 동기화.</em>
+</p>
+
+<p align="center">
+    <a href="https://github.com/atukunare/token-mate/releases"><img src="https://img.shields.io/github/v/release/atukunare/token-mate?include_prereleases&style=flat-square&label=release&color=22c55e" alt="최신 릴리스" /></a>
+    <a href="https://github.com/atukunare/token-mate/releases"><img src="https://img.shields.io/github/downloads/atukunare/token-mate/total?style=flat-square&color=22c55e" alt="총 다운로드" /></a>
+    <img src="https://img.shields.io/badge/Windows-10%2B-0078D4?style=flat-square" alt="Windows 10 이상" />
+    <img src="https://img.shields.io/badge/macOS-14%2B-0A84FF?style=flat-square&logo=apple&logoColor=white" alt="macOS 14 이상" />
+    <img src="https://img.shields.io/badge/iOS-16%2B-0A84FF?style=flat-square&logo=apple&logoColor=white" alt="iOS 16 이상" />
+    <a href="worker/README.md"><img src="https://img.shields.io/badge/Worker-Cloudflare-F38020?style=flat-square&logo=cloudflare&logoColor=white" alt="Cloudflare Worker" /></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-A855F7?style=flat-square" alt="라이선스: MIT" /></a>
+</p>
+
+<div align="center">
+    <img src=".github/assets/demo.gif">
+</div>
+
+## About
+
+Token Mate는 여러 AI 코딩 도구를 쓰는 개발자를 위한 로컬 우선 데스크톱 위젯입니다. 실시간 토큰 사용량, 예상 비용, 계정 한도, 세션별 내역을 macOS 메뉴 막대나 Windows 시스템 트레이에서 한곳에 확인할 수 있습니다.
+
+각 기기는 자신의 로컬 도구 로그만 읽습니다. 원하면 자체 호스트 hub나 Cloudflare Worker로 여러 기기를 연결해 요약 데이터만 동기화할 수 있으며, 프롬프트·소스 코드·자격 증명을 제3자에게 보낼 필요는 없습니다.
+
+[@atukunare](https://github.com/atukunare)가 유지합니다.
+
+## 지원 도구
+
+Token Mate는 **토큰 사용량**, **계정 한도**, **세션 상세**를 각각 지원합니다.
+
+| Logo | 도구 | 데이터 경로 | 토큰 사용량 | AI 도구 한도 | 세션 상세 |
+|:---:|------|-----------|:---:|:---:|:---:|
+| <img src=".github/assets/tools-icon/claude.png" width="28" alt="Claude Code" /> | Claude Code | `~/.claude/projects/`, `~/.claude/transcripts/` | ✅ | ✅ | ✅ |
+| <img src=".github/assets/tools-icon/codex.png" width="28" alt="Codex" /> | Codex | `~/.codex/sessions/` | ✅ | ✅ | ✅ |
+| <img src=".github/assets/tools-icon/opencode.png" width="28" alt="OpenCode" /> | OpenCode | `~/.local/share/opencode/` | ✅ | ✅ | ✅ |
+| <img src=".github/assets/tools-icon/hermes-agent.png" width="28" alt="Hermes Agent" /> | Hermes Agent | `$HERMES_HOME` 또는 `~/.hermes/` | ✅ | — | — |
+| <img src=".github/assets/tools-icon/openclaw.png" width="28" alt="OpenClaw" /> | OpenClaw | `~/.openclaw/agents/` | ✅ | — | — |
+| <img src=".github/assets/tools-icon/cursor.png" width="28" alt="Cursor" /> | Cursor | `~/.config/tokscale/cursor-cache/` (Cursor 동기화로 갱신) | ✅ | ✅ | — |
+| <img src=".github/assets/tools-icon/antigravity.png" width="28" alt="Antigravity" /> | Antigravity | `~/.config/tokscale/antigravity-cache/` (Antigravity 동기화로 갱신) | ✅ | ✅ | — |
+| <img src=".github/assets/tools-icon/cline.png" width="28" alt="Cline" /> | Cline | VS Code globalStorage tasks (`.../saoudrizwan.claude-dev/tasks/`) | ✅ | — | — |
+| <img src=".github/assets/tools-icon/kimi.png" width="28" alt="Kimi" /> | Kimi CLI / Kimi Code | `~/.kimi/sessions/`, `~/.kimi-code/sessions/` (`KIMI_CODE_HOME`) | ✅ | — | — |
+| <img src=".github/assets/tools-icon/qwen.png" width="28" alt="Qwen" /> | Qwen CLI | `~/.qwen/projects/` | ✅ | — | — |
+| <img src=".github/assets/tools-icon/xai.png" width="28" alt="Grok Build" /> | Grok Build | `$GROK_HOME/sessions/` 또는 `~/.grok/sessions/` | ✅ | — | — |
+| <img src=".github/assets/tools-icon/copilot.png" width="28" alt="GitHub Copilot" /> | GitHub Copilot CLI | `~/.copilot/otel/` | ✅ | — | — |
+| <img src=".github/assets/tools-icon/pi.png" width="28" alt="Pi" /> | Pi | `~/.pi/agent/sessions/`, `~/.omp/agent/sessions/` (Oh My Pi) | ✅ | — | — |
+| <img src=".github/assets/tools-icon/zed.png" width="28" alt="Zed" /> | Zed | `~/.local/share/zed/threads/threads.db` | ✅ | — | — |
+| <img src=".github/assets/tools-icon/kilocode.png" width="28" alt="Kilo Code" /> | Kilo Code | VS Code globalStorage tasks (`.../kilocode.kilo-code/tasks/`) — Linux 및 원격/WSL만 | ✅ | — | — |
+| <img src=".github/assets/tools-icon/deepseek.png" width="28" alt="DeepSeek" /> | DeepSeek | DeepSeek API 키 (DeepSeek API로 잔액 조회) | — | ✅ | — |
+
+## Token Mate를 쓰는 이유
+
+대부분의 사용량 모니터는 실행 중인 그 기기에서만 유용합니다. Token Mate는 멀티 디바이스 작업을 위해 만들어졌습니다. 각 기기가 로컬 로그를 감시하고 hub로 요약을 보내면, 연결된 모든 위젯이 토큰 변화를 거의 실시간으로 볼 수 있습니다.
+
+## 기능
+
+- **실시간 토큰 추적** — Claude Code, Codex, Hermes Agent, OpenCode, OpenClaw, Cursor, Antigravity, Cline, Kimi, Qwen, Grok Build, GitHub Copilot CLI, Pi, Zed, Kilo Code (턴당 수 초 내 UI 갱신)
+- **WSL 사용량 (Windows)** — 실행 중인 WSL 배포판 안 AI 도구 사용량을 자동 감지해 합산 (약 5분마다 주기 스캔)
+- **멀티 디바이스 실시간 동기화** — Server-Sent Events
+- **분류 보기** — 도구, 기기, 모델, 세션, 계정 한도별
+- **세션별 상세** — Claude Code, Codex, OpenCode 세션에서 프롬프트별 토큰, 응답별 토큰 분할·사용 도구까지 확장 (로컬 transcript/DB를 필요할 때만 읽으며 동기화하지 않음)
+- **캐시 히트 통계** — 도구·모델 클릭 시 입력 토큰(캐시 hit/miss), 출력 토큰, 히트율 상세
+- **비용 분류** — 토큰 수와 함께 비용 표시
+- **원하는 통화로 비용 표시** — USD, TWD, HKD, CNY; 환율은 매일 자동 갱신, 설정에서 수동 덮어쓰기 가능
+- **사용 추세 & 대시보드** (옵트인) — GitHub 스타일 활동 히트맵, 연속 일수, 기기 전체 도구/모델별 누적 사용(막대·K선)
+- **AI 도구 한도 감지** — Claude Code, Codex, Cursor, Antigravity, OpenCode의 session/weekly/billing/credits, DeepSeek 선불 잔액·오늘/이번 달 사용액
+- **상태 보기** (선택) — Claude, OpenAI, Cursor, DeepSeek 상태 페이지 수동/주기 확인
+- **도구 목록 커스터마이즈** — 추적은 유지한 채 숨기기, 고정, 순서 변경
+- **외관** — 테마(라이트 포함), 도구별 색, 글래스 투명도·블러, 투명 창
+- **메뉴 막대(macOS) / 시스템 트레이(Windows)** — 비용, 토큰, Claude/Codex/Cursor/Antigravity/OpenCode 한도 % 등
+- **플로팅 버블** — 드래그 가능한 미니 창, 클릭/호버 미리보기
+- **전역 단축키** — 어디서든 창 표시/숨김
+- **로컬 우선** — 단일 기기는 서버 불필요
+- **자체 호스트 동기화** — 위젯 내 hub, Node CLI hub, Cloudflare Worker
+- **iOS 위젯** — Worker hub + Widgy, Scriptable
+- **Discord Rich Presence** — 오늘 토큰·비용·주요 클라이언트 (옵트인)
+- **프라이버시 우선** — 요약 숫자만 기기 밖으로 나감
+
+| 한도 보기 | 기기 보기 | 모델 보기 |
+|:---:|:---:|:---:|
+| ![한도 보기](.github/assets/limits-view.png) | ![기기 보기](.github/assets/devices-view.png) | ![모델 보기](.github/assets/models-view.png) |
+
+| 세션 보기 | 세션 상세 | 서비스 상태 |
+|:---:|:---:|:---:|
+| ![세션 보기](.github/assets/sessions-view.png) | ![세션 상세](.github/assets/session-details.png) | ![서비스 상태](.github/assets/status-view.png) |
+
+| 사용 대시보드 — 개요 | 사용 대시보드 — 추세 |
+|:---:|:---:|
+| ![사용 대시보드 개요](.github/assets/dashboard-overview.png) | ![사용 대시보드 추세](.github/assets/dashboard-trends.png) |
+
+## 설치
+
+### 로컬 모드 — 단일 기기
+
+기본값. hub, agent, 설정 불필요.
+
+```bash
+npm install
+npm start
+```
+
+> macOS에서 `ELECTRON_RUN_AS_NODE=1` 환경 변수가 있으면 Electron이 깨질 수 있습니다. `env -u ELECTRON_RUN_AS_NODE npm start`로 실행하세요.
+
+#### macOS — 로그인 시 자동 실행 (선택, 소스 실행)
+
+```bash
+npm run launchd:install    # LaunchAgent 등록
+npm run launchd:uninstall  # LaunchAgent 제거
+```
+
+개발 환경 설정은 [CONTRIBUTING.md](CONTRIBUTING.md)를 참고하세요.
+
+### 멀티 디바이스 동기화
+
+모든 기기(및 headless agent)가 연결할 **hub 하나**를 고릅니다. 각 기기에서 위젯을 열고 **설정 → 멀티 디바이스 동기화**에서 모드를 선택합니다. 위젯이 이 기기 사용량을 자동으로 올리며, 위젯이 없는 기기에서만 `npm run agent`를 실행하면 됩니다.
+
+#### 옵션 A — 위젯에서 hub 호스트 (가장 쉬움, CLI 불필요)
+
+항상 켜 둔 기기에서 **설정 → 멀티 디바이스 동기화 → Host hub on this device**를 선택합니다. 위젯이 secret을 생성하고 LAN URL(Tailscale/ZeroTier 포함)을 표시합니다. 다른 기기에서는 **Connect to a hub**에 URL과 secret을 붙여 넣습니다.
+
+Token Mate가 실행 중일 때만 hub가 동작합니다. 앱을 종료하면(창만 닫는 것과 다름) hub가 멈추고 연결된 기기가 끊깁니다.
+
+#### 옵션 B — Node hub 자체 호스트 (상시 headless 기기)
+
+```bash
+# 상시 켜 둔 기기에서
+cp .env.example .env
+# TOKEN_MONITOR_SECRET을 비공개 값으로 설정한 뒤:
+npm run hub
+```
+
+#### 옵션 C — Cloudflare Worker hub (네트워크 간, iPhone 포함)
+
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/atukunare/token-mate/tree/main/worker)
+
+원클릭 배포 시 `TOKEN_MONITOR_SECRET` 입력을 요청합니다. 수동 배포:
+
+```bash
+cd worker
+npm install
+npx wrangler login
+npx wrangler secret put TOKEN_MONITOR_SECRET
+npx wrangler deploy
+```
+
+배포 URL을 각 기기 **설정 → 멀티 디바이스 동기화**에 붙여 넣습니다. iOS 위젯은 [worker/README.md](worker/README.md), HTTP API는 [docs/API.md](docs/API.md)를 참고하세요.
+
+## 데스크톱 설치 파일
+
+[releases 페이지](https://github.com/atukunare/token-mate/releases)에서 다운로드할 수 있습니다. 릴리스는 서명되지 않았으며, macOS(arm64)와 Windows(x64) 최초 실행 안내가 릴리스 노트에 있습니다. 그 외 플랫폼은 `npm start`로 소스 실행.
+
+앱 상태는 OS 사용자 데이터 디렉터리에 저장됩니다. 앱과 함께 해당 폴더를 삭제하면 완전히 제거됩니다.
+
+| 플랫폼 | 경로 |
+|--------|------|
+| macOS | `~/Library/Application Support/Token Mate/` |
+| Windows | `%APPDATA%/Token Mate/` |
+
+## 소스에서 빌드
+
+릴리스가 서명되지 않았으므로 직접 빌드할 수 있습니다. Node.js 22.13+와 **대상 OS**가 필요합니다(electron-builder는 macOS `.dmg`와 Windows `.exe` 교차 빌드 불가).
+
+```bash
+npm install
+npm run dist:mac   # macOS arm64 .dmg          → dist/
+npm run dist:win   # Windows x64 installer .exe → dist/
+npm run pack       # 설치 없이 앱 디렉터리만 (로컬 테스트)
+```
+
+결과물은 `dist/`에 생성됩니다. Linux와 Intel Mac은 패키징 대상이 없어 `npm start`로 실행하세요.
+
+## 동작 방식
+
+```text
+모드 A — 로컬 (기본, 설정 없음)
+    위젯 (Electron) ──▶ tokscale ──▶ ~/.claude, ~/.codex, $HERMES_HOME
+
+모드 B — 동기화 (옵트인, 멀티 디바이스)
+    기기 A agent ──▶
+    기기 B agent ──▶  hub  ──▶  아무 기기의 위젯
+    기기 C agent ──▶
+```
+
+위젯은 **설정 → 멀티 디바이스 동기화**에 따라 로컬/동기화를 선택합니다. hub는 `npm run hub`, Cloudflare Worker, 또는 위젯 내 Host 모드로 실행할 수 있습니다. 동기화 모드에서는 hub가 SSE로 집계 통계를 푸시해 한 기기의 변경이 수 초 내 다른 기기에 반영됩니다.
+
+## 설정
+
+### 위젯 (GUI)
+
+위젯 헤더의 `⚙` 버튼으로 설정 패널을 엽니다.
+
+- **멀티 디바이스 동기화** — **Local only**, **Connect to a hub**, **Host hub on this device**
+- **추적 도구** — 수집 대상 선택, 목록에서 숨기기·고정·순서 변경
+- **AI 도구 한도** — Claude Code, Codex, Cursor, Antigravity, OpenCode, DeepSeek 한도 감지 및 갱신 주기
+- **추세** — 옵트인 사용 기록, 사용 대시보드(히트맵, 연속 일수, 막대/K선)
+- **창 동작** — 항상 위, 일반 창, 바탕 화면 고정
+- **트레이 모드** — 메뉴 막대/시스템 트레이 팝오버, 아이콘 옆 표시 항목 선택
+- **플로팅 버블** — 미니 창, 클릭/호버 미리보기
+- **단축키** — 전역 표시/숨김
+- **외관** — 테마, 색상, Discord Rich Presence, 글래스 등
+- **고급** — `settings.json` 직접 편집 (`allTimeSince` 등)
+
+헤더의 고정 버튼으로 «항상 위»를 토글합니다.
+
+### Headless agent와 hub (`.env`)
+
+agent와 hub에는 UI가 없습니다. 프로젝트 루트 `.env`(`.env.example` 복사)로 설정합니다.
+
+```env
+TOKEN_MONITOR_HUB_URL=               # 동기화 필수 — Worker URL 또는 http://<lan-ip>:17321
+TOKEN_MONITOR_SECRET=                # hub와 동일한 secret
+TOKEN_MONITOR_DEVICE_ID=             # 선택 — 기본값 호스트명
+TOKEN_MONITOR_CLIENTS=               # 선택 — 기본값 전체 도구; 비우면 추적 안 함
+TOKEN_MONITOR_HISTORY_ENABLED=       # 선택 — 기본 꺼짐; 1이면 추세 기록
+TOKEN_MONITOR_LIMITS_ENABLED=        # 선택 — 기본 켜짐; 0이면 CLI 프로브 생략
+TOKEN_MONITOR_LIMIT_PROVIDERS=       # 선택 — claude,codex,cursor,antigravity,opencode,deepseek
+```
+
+위젯은 같은 env를 첫 실행 기본값으로 읽은 뒤 GUI 설정으로 덮어씁니다.
+
+CLI 플래그(`--hub=`, `--secret=`, …)는 env보다 우선합니다.
+
+일회 실행 예:
+
+```bash
+npm run agent -- --clients=claude,codex,opencode --once
+```
+
+## 프라이버시
+
+hub와 agent는 요약 필드만 전송합니다.
+
+- 기기 id, 호스트명, 플랫폼
+- 기간별 총 토큰 (오늘 / 이번 달 / 전체)
+- 비용 합계 (`tokscale`이 비용을 반환할 때)
+- 클라이언트·모델별 분류
+- AI 도구 한도 사용 시 정규화된 Claude Code/Codex/Cursor/Antigravity/OpenCode 한도 상태
+
+원본 AI 로그, 프롬프트, 소스 코드, 대화 내용, OAuth·토큰·이메일·제공자 원본 응답은 전송하지 않습니다. `.env`, `data/`, `node_modules/`는 gitignore됩니다.
+
+## 요구 사항
+
+- macOS 또는 Windows
+- Node.js 22.13+
+- 동기화 모드만: agent/위젯에서 hub까지 네트워크 연결
+
+## 문서
+
+| 문서 | 설명 |
+|------|------|
+| [CONTRIBUTING.md](CONTRIBUTING.md) | 개발 및 PR 가이드 |
+| [SECURITY.md](SECURITY.md) | 보안 취약점 비공개 제보 |
+| [CHANGELOG.md](CHANGELOG.md) | 릴리스 노트 안내 |
+| [docs/API.md](docs/API.md) | Hub HTTP API |
+| [worker/README.md](worker/README.md) | Cloudflare Worker 배포 |
+| [docs/hermes-wsl-setup.md](docs/hermes-wsl-setup.md) | WSL Hermes Agent (중국어) |
+
+## 감사의 글
+
+- [tokscale](https://github.com/junhoyeo/tokscale) — 로그 파싱 및 토큰 집계
+- [CodexBar](https://github.com/steipete/CodexBar) — AI 도구 한도 연구
+
+## 기여자
+
+- [@atukunare](https://github.com/atukunare) — 유지자
+- 통합 플랫폼(GitHub 커밋 기여자 아님): [Anthropic](https://www.anthropic.com/) (Claude), [OpenAI](https://openai.com/) (Codex), [Cursor](https://cursor.com/)
+
+[CONTRIBUTORS.md](CONTRIBUTORS.md)와 [GitHub Contributors graph](https://github.com/atukunare/token-mate/graphs/contributors)를 참고하세요.
+
+## Credits
+
+Token Mate는 MIT 라이선스의 원작 Token Monitor 프로젝트를 기반으로 합니다.
+이 버전은 @atukunare가 브랜딩, 문서, 기능 개선을 포함해 유지합니다.
+
+## 라이선스
+
+[MIT](LICENSE)

@@ -1,15 +1,6 @@
 <p align="right">
-   <strong>EN</strong> | <a href="./README.zh-CN.md">简</a> | <a href="./README.zh-TW.md">繁</a>
+   <strong>EN</strong> | <a href="./README.zh-CN.md">简</a> | <a href="./README.zh-TW.md">繁</a> | <a href="./README.ko.md">KO</a>
 </p>
-
-## Agent Entry
-
-This project keeps `README.md` and `CHANGELOG.md` as the root canonical documents.
-
-- Global agent rules: `/Users/mac/wiki/AGENTS.md`
-- Project knowledge: `/Users/mac/wiki/projects/ai-token-monitor.md`
-- Changelog/roadmap: `CHANGELOG.md`
-- Scope: search and edit inside this project by default; open other projects or wiki files only by exact path when needed.
 
 <div align="center">
     <img src=".github/assets/app.png" alt="Token Mate logo" width="120">
@@ -26,7 +17,6 @@ This project keeps `README.md` and `CHANGELOG.md` as the root canonical document
     <img src="https://img.shields.io/badge/Windows-10%2B-0078D4?style=flat-square" alt="Windows 10 or later" />
     <img src="https://img.shields.io/badge/macOS-14%2B-0A84FF?style=flat-square&logo=apple&logoColor=white" alt="macOS 14 or later" />
     <img src="https://img.shields.io/badge/iOS-16%2B-0A84FF?style=flat-square&logo=apple&logoColor=white" alt="iOS 16 or later" />
-    <a href="https://discord.gg/HmdNVVvw5P"><img src="https://img.shields.io/discord/1344259784219689031?color=5865F2&label=Discord&logo=discord&logoColor=white&style=flat-square" alt="Discord"></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-A855F7?style=flat-square" alt="License: MIT" /></a>
 </p>
 
@@ -115,6 +105,15 @@ The default. No hub, no agent, no config.
 npm install
 npm start
 ```
+
+#### macOS — start at login (optional, from source)
+
+```bash
+npm run launchd:install    # register LaunchAgent
+npm run launchd:uninstall  # remove LaunchAgent
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup notes.
 
 ### Multi-device sync
 
@@ -253,6 +252,17 @@ are gitignored.
 - Node.js 22.13+
 - For sync mode only: network reachability from each agent/widget to the hub
 
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How to develop and open pull requests |
+| [SECURITY.md](SECURITY.md) | How to report security issues privately |
+| [CHANGELOG.md](CHANGELOG.md) | Release notes pointer and doc milestones |
+| [docs/API.md](docs/API.md) | Hub HTTP API reference |
+| [worker/README.md](worker/README.md) | Cloudflare Worker deployment |
+| [docs/hermes-wsl-setup.md](docs/hermes-wsl-setup.md) | Hermes Agent on WSL (Chinese) |
+
 ## Acknowledgments
 
 - [tokscale](https://github.com/junhoyeo/tokscale) for log parsing and token accounting.
@@ -261,9 +271,9 @@ are gitignored.
 ## Contributors
 
 - [@atukunare](https://github.com/atukunare) — maintainer
-- [Anthropic](https://www.anthropic.com/) — Claude / Claude Code
-- [OpenAI](https://openai.com/) — Codex
-- [Cursor](https://cursor.com/) — Cursor
+- Integrated platforms (not GitHub commit authors): [Anthropic](https://www.anthropic.com/) (Claude), [OpenAI](https://openai.com/) (Codex), [Cursor](https://cursor.com/)
+
+See [CONTRIBUTORS.md](CONTRIBUTORS.md) and the [GitHub Contributors graph](https://github.com/atukunare/token-mate/graphs/contributors).
 
 ## Credits
 

@@ -1,5 +1,5 @@
 <p align="right">
-   <a href="./README.md">EN</a> | <a href="./README.zh-CN.md">简</a> | <strong>繁</strong>
+   <a href="./README.md">EN</a> | <a href="./README.zh-CN.md">简</a> | <strong>繁</strong> | <a href="./README.ko.md">KO</a>
 </p>
 <div align="center">
     <img src=".github/assets/app.png" alt="Token Mate logo" width="120">
@@ -16,7 +16,6 @@
     <img src="https://img.shields.io/badge/Windows-10%2B-0078D4?style=flat-square" alt="Windows 10 或更新" />
     <img src="https://img.shields.io/badge/macOS-14%2B-0A84FF?style=flat-square&logo=apple&logoColor=white" alt="macOS 14 或更新" />
     <img src="https://img.shields.io/badge/iOS-16%2B-0A84FF?style=flat-square&logo=apple&logoColor=white" alt="iOS 16 或更新" />
-    <a href="https://discord.gg/HmdNVVvw5P"><img src="https://img.shields.io/discord/1344259784219689031?color=5865F2&label=Discord&logo=discord&logoColor=white&style=flat-square" alt="Discord"></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-A855F7?style=flat-square" alt="授權：MIT" /></a>
 </p>
 
@@ -248,9 +247,9 @@ hub 與代理只傳輸摘要欄位：
 ## 貢獻者
 
 - [@atukunare](https://github.com/atukunare) — 維護者
-- [Anthropic](https://www.anthropic.com/) — Claude / Claude Code
-- [OpenAI](https://openai.com/) — Codex
-- [Cursor](https://cursor.com/) — Cursor
+- 整合平台（非 GitHub 程式碼貢獻者）：[Anthropic](https://www.anthropic.com/) (Claude)、[OpenAI](https://openai.com/) (Codex)、[Cursor](https://cursor.com/)
+
+詳見 [CONTRIBUTORS.md](CONTRIBUTORS.md) 與 [GitHub Contributors graph](https://github.com/atukunare/token-mate/graphs/contributors)。
 
 ## Credits
 
