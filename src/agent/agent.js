@@ -59,7 +59,7 @@ function registerPidFile() {
 }
 
 async function main() {
-  console.log(`Token Monitor agent device=${deviceId} hub=${hubUrl} intervalMs=${intervalMs} watch=${watchEnabled} history=${historyEnabled ? 'on' : 'off'} limits=${limitsEnabled ? `${limitProviders || 'none'}:${limitsRefreshMs}ms` : 'off'}`);
+  console.log(`Token Mate agent device=${deviceId} hub=${hubUrl} intervalMs=${intervalMs} watch=${watchEnabled} history=${historyEnabled ? 'on' : 'off'} limits=${limitsEnabled ? `${limitProviders || 'none'}:${limitsRefreshMs}ms` : 'off'}`);
   if (!secret) console.warn('Warning: TOKEN_MONITOR_SECRET is not set. Posting without authorization header.');
   if (once) {
     const summary = await collectUsageOnce({ ...collectorOptions, includeHistory: true });

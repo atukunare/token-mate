@@ -2,7 +2,7 @@
 
 const semver = require('semver');
 
-const GITHUB_REPO = 'Javis603/token-monitor';
+const GITHUB_REPO = 'atukunare/token-mate';
 const RELEASES_LATEST_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
 const REQUEST_TIMEOUT_MS = 10 * 1000;
 
@@ -48,7 +48,7 @@ async function checkLatestRelease(currentVersion) {
         signal,
         headers: {
           'accept': 'application/vnd.github+json',
-          'user-agent': `token-monitor/${currentVersion || '0.0.0'}`,
+          'user-agent': `token-mate/${currentVersion || '0.0.0'}`,
           'x-github-api-version': '2022-11-28'
         }
       });

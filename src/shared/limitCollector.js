@@ -24,7 +24,7 @@ const CLAUDE_OAUTH_CLIENT_ID = '9d1c250a-e61b-44d9-88ed-5944d1962f5e';
 const CLAUDE_REFRESH_LEEWAY_MS = 5 * 60 * 1000;
 const CLAUDE_SESSION_WINDOW_MINUTES = 5 * 60;
 const CLAUDE_WEEKLY_WINDOW_MINUTES = 7 * 24 * 60;
-const TOKEN_MONITOR_USER_AGENT = `token-monitor/${appVersion()} (+https://github.com/Javis603/token-monitor)`;
+const TOKEN_MONITOR_USER_AGENT = `token-mate/${appVersion()} (+https://github.com/atukunare/token-mate)`;
 
 function nowIso(nowMs) {
   return new Date(nowMs).toISOString();
@@ -1539,7 +1539,7 @@ async function readCodexRpcWithCommand(command, deps = {}) {
   const rpc = createJsonRpcClient(child, timeoutMs);
   try {
     await rpc.send('initialize', {
-      clientInfo: { name: 'token-monitor', title: 'Token Monitor', version: appVersion() }
+      clientInfo: { name: 'token-mate', title: 'Token Mate', version: appVersion() }
     });
     rpc.notify('initialized', {});
     const rateLimitResult = await rpc.send('account/rateLimits/read');

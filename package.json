@@ -2,7 +2,7 @@
   "name": "token-mate",
   "productName": "Token Mate",
   "version": "0.15.0",
-  "description": "Live token & cost widget for AI coding tools — local-first, optional multi-device sync. Fork of token-monitor.",
+  "description": "Local-first menu bar widget for live AI coding tool token usage, cost, and account limits.",
   "main": "src/electron/main.js",
   "scripts": {
     "start": "electron .",
@@ -90,7 +90,6 @@
     "codex",
     "hermes",
     "token-mate",
-    "token-monitor",
     "token-usage",
     "cost-tracking",
     "llm",

@@ -11,8 +11,6 @@ This project keeps `README.md` and `CHANGELOG.md` as the root canonical document
 - Changelog/roadmap: `CHANGELOG.md`
 - Scope: search and edit inside this project by default; open other projects or wiki files only by exact path when needed.
 
-> **Fork notice:** This project is an independent fork of [Javis603/token-monitor](https://github.com/Javis603/token-monitor), licensed under the [MIT License](LICENSE). Original work © [@Javis](https://github.com/Javis603).
-
 <div align="center">
     <img src=".github/assets/app.png" alt="Token Mate logo" width="120">
     <h1>Token Mate</h1>
@@ -23,8 +21,8 @@ This project keeps `README.md` and `CHANGELOG.md` as the root canonical document
 </p>
 
 <p align="center">
-    <a href="https://github.com/Javis603/token-monitor/releases"><img src="https://img.shields.io/github/v/release/Javis603/token-monitor?include_prereleases&style=flat-square&label=release&color=22c55e" alt="Latest release" /></a>
-    <a href="https://github.com/Javis603/token-monitor/releases"><img src="https://img.shields.io/github/downloads/Javis603/token-monitor/total?style=flat-square&color=22c55e" alt="Total downloads" /></a>
+    <a href="https://github.com/atukunare/token-mate/releases"><img src="https://img.shields.io/github/v/release/atukunare/token-mate?include_prereleases&style=flat-square&label=release&color=22c55e" alt="Latest release" /></a>
+    <a href="https://github.com/atukunare/token-mate/releases"><img src="https://img.shields.io/github/downloads/atukunare/token-mate/total?style=flat-square&color=22c55e" alt="Total downloads" /></a>
     <img src="https://img.shields.io/badge/Windows-10%2B-0078D4?style=flat-square" alt="Windows 10 or later" />
     <img src="https://img.shields.io/badge/macOS-14%2B-0A84FF?style=flat-square&logo=apple&logoColor=white" alt="macOS 14 or later" />
     <img src="https://img.shields.io/badge/iOS-16%2B-0A84FF?style=flat-square&logo=apple&logoColor=white" alt="iOS 16 or later" />
@@ -36,13 +34,17 @@ This project keeps `README.md` and `CHANGELOG.md` as the root canonical document
     <img src=".github/assets/demo.gif">
 </div>
 
-## What is Token Monitor?
+## About
 
-A desktop widget that shows live token usage and AI Tool Limits across various AI coding tools (Claude Code, Codex, Hermes Agent, OpenCode, OpenClaw, Cursor, Antigravity, Cline, and more) with real-time multi-device sync, historical usage trends, and breakdowns by tool, device, model, or session.
+Token Mate is a local-first desktop widget for developers who use multiple AI coding tools. It shows live token usage, estimated cost, account limits, and session breakdowns in one place — from the menu bar on macOS or the system tray on Windows.
+
+Each device reads its own local tool logs. Optionally, connect machines through a self-hosted hub or Cloudflare Worker so every device stays in sync without sending prompts, source code, or credentials to a third party.
+
+Maintained by [@atukunare](https://github.com/atukunare).
 
 ## Supported Tools
 
-Token Monitor supports token usage, account-limit checks, and session details separately:
+Token Mate supports token usage, account-limit checks, and session details separately:
 
 | Logo | Tool | Data path | Token Usage | AI Tool Limits | Session Details |
 |:---:|------|-----------|:---:|:---:|:---:|
@@ -63,9 +65,9 @@ Token Monitor supports token usage, account-limit checks, and session details se
 | <img src=".github/assets/tools-icon/kilocode.png" width="28" alt="Kilo Code" /> | Kilo Code | VS Code globalStorage tasks (`.../kilocode.kilo-code/tasks/`) — Linux & remote/WSL only | ✅ | — | — |
 | <img src=".github/assets/tools-icon/deepseek.png" width="28" alt="DeepSeek" /> | DeepSeek | DeepSeek API key (balance via DeepSeek API) | — | ✅ | — |
 
-## Why Token Monitor?
+## Why Token Mate?
 
-Most usage monitors are useful on the machine they run on. Token Monitor is built for multi-device work: each device watches its own local logs, sends summary updates to your hub, and every connected widget sees token changes almost immediately.
+Most usage monitors are useful on the machine they run on. Token Mate is built for multi-device work: each device watches its own local logs, sends summary updates to your hub, and every connected widget sees token changes almost immediately.
 
 ## Features
 
@@ -122,7 +124,7 @@ Pick ONE hub backend that all your devices (and any headless agents) connect to.
 
 In the widget on one always-on machine, open Settings → Multi-device Sync and pick **Host hub on this device**. The widget generates a random secret and lists the LAN URLs other devices can connect to (Tailscale or ZeroTier addresses appear here too). On every other device, pick **Connect to a hub** and paste the URL + secret.
 
-The hub runs while Token Monitor is running — quitting (not just closing the window) stops it for all connected devices.
+The hub runs while Token Mate is running — quitting (not just closing the window) stops it for all connected devices.
 
 #### Option B — Self-hosted Node hub (always-on headless machine)
 
@@ -135,7 +137,7 @@ npm run hub
 
 #### Option C — Cloudflare Worker hub (across networks, including iPhone)
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Javis603/token-monitor/tree/main/worker)
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/atukunare/token-mate/tree/main/worker)
 
 One-click deploy — Cloudflare will prompt for the `TOKEN_MONITOR_SECRET` during setup. Or deploy manually:
 
@@ -151,14 +153,14 @@ Paste the deployed URL into each device's widget at Settings → Multi-device Sy
 
 ## Desktop installer
 
-You can download the app from the [releases page](https://github.com/Javis603/token-monitor/releases). All releases are unsigned; release notes include first-launch unlock steps for macOS (arm64) and Windows (x64). Other platforms run from source via `npm start`.
+You can download the app from the [releases page](https://github.com/atukunare/token-mate/releases). All releases are unsigned; release notes include first-launch unlock steps for macOS (arm64) and Windows (x64). Other platforms run from source via `npm start`.
 
 App state lives in the OS user-data dir — delete it along with the app to fully uninstall.
 
 | Platform | Path |
 |----------|------|
-| macOS | `~/Library/Application Support/Token Monitor/` |
-| Windows | `%APPDATA%/Token Monitor/` |
+| macOS | `~/Library/Application Support/Token Mate/` |
+| Windows | `%APPDATA%/Token Mate/` |
 
 ## Build from source
 
@@ -256,6 +258,18 @@ are gitignored.
 - [tokscale](https://github.com/junhoyeo/tokscale) for log parsing and token accounting.
 - [CodexBar](https://github.com/steipete/CodexBar) for AI Tool Limits research.
 
+## Contributors
+
+- [@atukunare](https://github.com/atukunare) — maintainer
+- [Anthropic](https://www.anthropic.com/) — Claude / Claude Code
+- [OpenAI](https://openai.com/) — Codex
+- [Cursor](https://cursor.com/) — Cursor
+
+## Credits
+
+Token Mate is based on the original MIT-licensed Token Monitor project.
+This version is maintained by @atukunare with additional branding, documentation, and feature improvements.
+
 ## License
 
-[MIT](LICENSE) © [@Javis](https://github.com/Javis603)
+[MIT](LICENSE)

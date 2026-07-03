@@ -1,6 +1,6 @@
 /* theme.js: resolve/toggle/persist theme. Exposes window.TM_theme. */
 (function () {
-  var KEY = "token-monitor-site-theme";
+  var KEY = "token-mate-site-theme";
   var root = document.documentElement;
 
   function stored() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }

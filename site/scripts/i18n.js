@@ -1,16 +1,16 @@
 /* i18n.js: translations + language resolution. No auto-run; main.js drives it. */
 var supportedLanguages = ["en", "zh-TW", "zh-CN"];
-var languageStorageKey = "token-monitor-site-language";
+var languageStorageKey = "token-mate-site-language";
 
 var translations = {
   en: {
-    "meta.title": "Token Monitor: AI Tools usage at a glance",
-    "meta.description": "Token Monitor is a local-first desktop widget for real-time token, cost, limit, and session monitoring across AI Tools.",
-    "meta.ogTitle": "Token Monitor",
+    "meta.title": "Token Mate: AI Tools usage at a glance",
+    "meta.description": "Token Mate is a local-first desktop widget for real-time token, cost, limit, and session monitoring across AI Tools.",
+    "meta.ogTitle": "Token Mate",
     "meta.ogDescription": "Local-first token, cost, limit, and session monitoring for AI Tools.",
     "nav.skip": "Skip to content",
     "nav.primary": "Primary",
-    "nav.home": "Token Monitor home",
+    "nav.home": "Token Mate home",
     "nav.language": "Language",
     "nav.theme": "Toggle light or dark theme",
     "nav.github": "GitHub",
@@ -42,7 +42,7 @@ var translations = {
     "feature.status.body": "Watch Claude, OpenAI, Cursor, and DeepSeek service status without leaving the widget. Each card leads with the active incident title and the count of affected components, and re-checks on your chosen interval.",
 
     "dash.title": "A year of AI coding, charted.",
-    "dash.lede": "Turn on opt-in history and Token Monitor opens a full dashboard window: a GitHub-style activity heatmap with streaks, plus per-tool and per-model usage stacked over time in bar and K-line views, rolled up across all your devices.",
+    "dash.lede": "Turn on opt-in history and Token Mate opens a full dashboard window: a GitHub-style activity heatmap with streaks, plus per-tool and per-model usage stacked over time in bar and K-line views, rolled up across all your devices.",
     "mock.you": "YOU",
     "mock.newest": "↕ Newest",
     "mock.session.one": "Compare model spend...",
@@ -81,7 +81,7 @@ var translations = {
     "how.backend.worker": "Cloudflare Worker",
 
     "privacy.title": "Your code and conversations are not the product.",
-    "privacy.body": "Token Monitor syncs only the fields needed to show totals, costs, tool and model breakdowns, and normalized account limit status.",
+    "privacy.body": "Token Mate syncs only the fields needed to show totals, costs, tool and model breakdowns, and normalized account limit status.",
     "privacy.payload.cap": "The entire record a hub ever receives: counts, costs, labels, and limit percentages. The account behind each limit is a one-way hash, never the login itself.",
     "privacy.never": "Never syncs",
     "privacy.never.1": "Raw prompts or source files",
@@ -103,13 +103,13 @@ var translations = {
   },
 
   "zh-TW": {
-    "meta.title": "Token Monitor：AI Tools 用量一眼看清",
-    "meta.description": "Token Monitor 是為 AI Tools 打造的本地優先桌面 widget，可即時監控 token、成本與限額，查看 session 明細，並透過自架 hub 同步多台裝置。",
-    "meta.ogTitle": "Token Monitor",
+    "meta.title": "Token Mate：AI Tools 用量一眼看清",
+    "meta.description": "Token Mate 是為 AI Tools 打造的本地優先桌面 widget，可即時監控 token、成本與限額，查看 session 明細，並透過自架 hub 同步多台裝置。",
+    "meta.ogTitle": "Token Mate",
     "meta.ogDescription": "為 AI Tools 打造的本地優先 token、成本、限額與 session 監控。",
     "nav.skip": "跳到內容",
     "nav.primary": "主要導覽",
-    "nav.home": "Token Monitor 首頁",
+    "nav.home": "Token Mate 首頁",
     "nav.language": "語言",
     "nav.theme": "切換淺色或深色主題",
     "nav.github": "GitHub",
@@ -141,7 +141,7 @@ var translations = {
     "feature.status.body": "不必離開 widget，就能查看 Claude、OpenAI、Cursor 與 DeepSeek 的服務狀態。每張卡片以進行中的事件標題與受影響元件數開頭，並依你設定的間隔重新檢查。",
 
     "dash.title": "把一年的 AI coding 畫成圖。",
-    "dash.lede": "開啟可選的歷史收集，Token Monitor 會打開完整的 dashboard 視窗：GitHub 風格的活動熱力圖與連續天數，加上隨時間堆疊的各工具、各模型用量，提供長條圖與 K 線兩種檢視，並彙整你所有裝置。",
+    "dash.lede": "開啟可選的歷史收集，Token Mate 會打開完整的 dashboard 視窗：GitHub 風格的活動熱力圖與連續天數，加上隨時間堆疊的各工具、各模型用量，提供長條圖與 K 線兩種檢視，並彙整你所有裝置。",
     "mock.you": "你",
     "mock.newest": "↕ 最新",
     "mock.session.one": "比較模型成本...",
@@ -180,7 +180,7 @@ var translations = {
     "how.backend.worker": "Cloudflare Worker",
 
     "privacy.title": "你的程式碼與對話不是產品。",
-    "privacy.body": "Token Monitor 只同步顯示總量、成本、工具與模型拆分，以及標準化帳戶限制所需的欄位。",
+    "privacy.body": "Token Mate 只同步顯示總量、成本、工具與模型拆分，以及標準化帳戶限制所需的欄位。",
     "privacy.payload.cap": "這就是 hub 收到的完整紀錄：數字、成本、標籤與限制百分比。每個限制背後的帳戶都是單向 hash，永遠不是登入身分本身。",
     "privacy.never": "永不同步",
     "privacy.never.1": "原始提示詞或原始碼",
@@ -202,13 +202,13 @@ var translations = {
   },
 
   "zh-CN": {
-    "meta.title": "Token Monitor：AI Tools 用量一眼看清",
-    "meta.description": "Token Monitor 是为 AI Tools 打造的本地优先桌面组件，可实时监控 token、成本与限额，查看 session 明细，并通过自托管 hub 同步多台设备。",
-    "meta.ogTitle": "Token Monitor",
+    "meta.title": "Token Mate：AI Tools 用量一眼看清",
+    "meta.description": "Token Mate 是为 AI Tools 打造的本地优先桌面组件，可实时监控 token、成本与限额，查看 session 明细，并通过自托管 hub 同步多台设备。",
+    "meta.ogTitle": "Token Mate",
     "meta.ogDescription": "为 AI Tools 打造的本地优先 token、成本、限额与 session 监控。",
     "nav.skip": "跳到内容",
     "nav.primary": "主要导航",
-    "nav.home": "Token Monitor 首页",
+    "nav.home": "Token Mate 首页",
     "nav.language": "语言",
     "nav.theme": "切换浅色或深色主题",
     "nav.github": "GitHub",
@@ -240,7 +240,7 @@ var translations = {
     "feature.status.body": "不必离开 widget，就能查看 Claude、OpenAI、Cursor 与 DeepSeek 的服务状态。每张卡片以进行中的事件标题与受影响组件数开头，并按你设定的间隔重新检查。",
 
     "dash.title": "把一年的 AI coding 画成图。",
-    "dash.lede": "开启可选的历史收集，Token Monitor 会打开完整的 dashboard 窗口：GitHub 风格的活动热力图与连续天数，加上随时间堆叠的各工具、各模型用量，提供柱状图与 K 线两种视图，并汇总你所有设备。",
+    "dash.lede": "开启可选的历史收集，Token Mate 会打开完整的 dashboard 窗口：GitHub 风格的活动热力图与连续天数，加上随时间堆叠的各工具、各模型用量，提供柱状图与 K 线两种视图，并汇总你所有设备。",
     "mock.you": "你",
     "mock.newest": "↕ 最新",
     "mock.session.one": "比较模型成本...",
@@ -279,7 +279,7 @@ var translations = {
     "how.backend.worker": "Cloudflare Worker",
 
     "privacy.title": "你的代码与对话不是产品。",
-    "privacy.body": "Token Monitor 只同步显示总量、成本、工具与模型拆分，以及标准化账号限制所需的字段。",
+    "privacy.body": "Token Mate 只同步显示总量、成本、工具与模型拆分，以及标准化账号限制所需的字段。",
     "privacy.payload.cap": "这就是 hub 收到的完整记录：数字、成本、标签与限制百分比。每个限制背后的账号都是单向 hash，永远不是登录身份本身。",
     "privacy.never": "永不同步",
     "privacy.never.1": "原始提示词或源码",

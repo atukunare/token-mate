@@ -1,4 +1,4 @@
-# Token Monitor Hub — Cloudflare Worker
+# Token Mate Hub — Cloudflare Worker
 
 Drop-in replacement for the self-hosted Node hub, deployed as a Cloudflare
 Worker with a Durable Object holding device state. Speaks the same HTTP
@@ -30,7 +30,7 @@ npx wrangler deploy
 Wrangler prints the deployed URL, for example:
 
 ```
-https://token-monitor-hub.<your-subdomain>.workers.dev
+https://token-mate-hub.<your-subdomain>.workers.dev
 ```
 
 Point each agent and widget at that URL.
@@ -48,7 +48,7 @@ Endpoints work the same as in production. Use a separate dev secret with
 
 Settings → Multi-device Sync:
 
-- Hub URL: `https://token-monitor-hub.<your-subdomain>.workers.dev`
+- Hub URL: `https://token-mate-hub.<your-subdomain>.workers.dev`
 - Secret: the value you set with `wrangler secret put`
 
 Save. The status pill should switch from `Local` to `Live` once the SSE stream
@@ -59,7 +59,7 @@ connects.
 Either via `.env` at the project root (copy from `.env.example`):
 
 ```env
-TOKEN_MONITOR_HUB_URL=https://token-monitor-hub.<your-subdomain>.workers.dev
+TOKEN_MONITOR_HUB_URL=https://token-mate-hub.<your-subdomain>.workers.dev
 TOKEN_MONITOR_SECRET=<the same secret>
 TOKEN_MONITOR_DEVICE_ID=             # optional — defaults to hostname
 ```
@@ -67,7 +67,7 @@ TOKEN_MONITOR_DEVICE_ID=             # optional — defaults to hostname
 Or by exporting them inline when launching:
 
 ```bash
-TOKEN_MONITOR_HUB_URL=https://token-monitor-hub.<your-subdomain>.workers.dev \
+TOKEN_MONITOR_HUB_URL=https://token-mate-hub.<your-subdomain>.workers.dev \
 TOKEN_MONITOR_SECRET=<the same secret> \
 npm run agent
 ```
@@ -97,7 +97,7 @@ config, so the secret never hits an external log.
 Minimum version — just one number:
 
 ```js
-const HUB = 'https://token-monitor-hub.<your-subdomain>.workers.dev';
+const HUB = 'https://token-mate-hub.<your-subdomain>.workers.dev';
 const SECRET = '<the same secret>';
 const url = HUB + '/api/stats?secret=' + SECRET;
 fetch(url)
@@ -123,7 +123,7 @@ Combined version with a config block and compact `K / M / B` token
 formatting for tight widget layouts:
 
 ```js
-const HUB = 'https://token-monitor-hub.<your-subdomain>.workers.dev';
+const HUB = 'https://token-mate-hub.<your-subdomain>.workers.dev';
 const SECRET = '<the same secret>';
 const PERIOD = 'today';        // 'today' | 'month' | 'allTime'
 const SHOW = 'tokens+cost';    // 'tokens' | 'cost' | 'tokens+cost'
@@ -157,7 +157,7 @@ Each Widgy text element gets its own script — duplicate it and change
 ### Scriptable
 
 ```js
-const req = new Request('https://token-monitor-hub.<your-subdomain>.workers.dev/api/stats');
+const req = new Request('https://token-mate-hub.<your-subdomain>.workers.dev/api/stats');
 req.headers = { authorization: 'Bearer <the same secret>' };
 const stats = await req.loadJSON();
 const todayTokens = stats.periods.today.totalTokens;

@@ -17,17 +17,17 @@
 ## Which file should I download?
 
 - **macOS (Apple Silicon, M1 and later)** — the `.dmg` file
-- **Windows 10/11** — `Token Monitor Setup ….exe` (installer, recommended)
-- **Windows portable** — `Token Monitor ….exe` (runs without installing)
+- **Windows 10/11** — `Token Mate Setup ….exe` (installer, recommended)
+- **Windows portable** — `Token Mate ….exe` (runs without installing)
 
-Intel Macs and Linux are not pre-built — run from source per the [README](https://github.com/Javis603/token-monitor#readme). The macOS `.zip` is the same app repackaged; ignore it unless you specifically need it.
+Intel Macs and Linux are not pre-built — run from source per the [README](https://github.com/atukunare/token-mate#readme). The macOS `.zip` is the same app repackaged; ignore it unless you specifically need it.
 
 ## First-launch unlock
 
-**macOS:** right-click `Token Monitor.app` → Open (once). If you see "Token Monitor" can't be opened or is damaged:
+**macOS:** right-click `Token Mate.app` → Open (once). If you see "Token Mate" can't be opened or is damaged:
 
 ```bash
-xattr -dr com.apple.quarantine "/Applications/Token Monitor.app"
+xattr -dr com.apple.quarantine "/Applications/Token Mate.app"
 ```
 
 **Windows:** SmartScreen → More info → Run anyway.
@@ -59,17 +59,17 @@ open-source: https://github.com/junhoyeo/tokscale
 ## 应该下载哪个文件？
 
 - **macOS（苹果芯片，M1 及之后机型）** — 下载 `.dmg` 安装包
-- **Windows 10/11** — 下载 `Token Monitor Setup ….exe`（安装版，推荐）
-- **Windows 便携版** — 下载 `Token Monitor ….exe`（无需安装，直接运行）
+- **Windows 10/11** — 下载 `Token Mate Setup ….exe`（安装版，推荐）
+- **Windows 便携版** — 下载 `Token Mate ….exe`（无需安装，直接运行）
 
-Intel Mac 和 Linux 暂不提供预构建版本，请参考 [README](https://github.com/Javis603/token-monitor#readme) 从源码运行。macOS 的 `.zip` 只是同一个 app 的重新打包版本，除非你明确需要，否则可以忽略。
+Intel Mac 和 Linux 暂不提供预构建版本，请参考 [README](https://github.com/atukunare/token-mate#readme) 从源码运行。macOS 的 `.zip` 只是同一个 app 的重新打包版本，除非你明确需要，否则可以忽略。
 
 ## 首次启动放行
 
-**macOS：** 右键 `Token Monitor.app` → 打开（只需要一次）。如果看到「Token Monitor」未开启 或 已损坏：
+**macOS：** 右键 `Token Mate.app` → 打开（只需要一次）。如果看到「Token Mate」未开启 或 已损坏：
 
 ```bash
-xattr -dr com.apple.quarantine "/Applications/Token Monitor.app"
+xattr -dr com.apple.quarantine "/Applications/Token Mate.app"
 ```
 
 **Windows：** SmartScreen → 更多信息 → 仍要运行。

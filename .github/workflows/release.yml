@@ -31,7 +31,7 @@ jobs:
       - run: npm run dist:${{ matrix.target }}
       - uses: actions/upload-artifact@v4
         with:
-          name: token-monitor-${{ matrix.target }}
+          name: token-mate-${{ matrix.target }}
           if-no-files-found: error
           path: ${{ matrix.artifact_path }}
 
