@@ -1,5 +1,5 @@
 /* i18n.js: translations + language resolution. No auto-run; main.js drives it. */
-var supportedLanguages = ["en", "zh-TW", "zh-CN"];
+var supportedLanguages = ["en", "zh-TW", "zh-CN", "ko"];
 var languageStorageKey = "token-mate-site-language";
 
 var translations = {
@@ -298,6 +298,105 @@ var translations = {
     "footer.api": "API 文档",
     "footer.worker": "Worker 文档",
     "footer.license": "许可证"
+  },
+
+  ko: {
+    "meta.title": "Token Mate: AI 코딩 도구 사용량 한눈에",
+    "meta.description": "Token Mate는 AI 코딩 도구의 토큰, 비용, 한도, 세션을 실시간으로 모니터링하는 로컬 우선 데스크톱 위젯입니다.",
+    "meta.ogTitle": "Token Mate",
+    "meta.ogDescription": "AI 코딩 도구를 위한 로컬 우선 토큰·비용·한도·세션 모니터링.",
+    "nav.skip": "본문으로 건너뛰기",
+    "nav.primary": "주요 탐색",
+    "nav.home": "Token Mate 홈",
+    "nav.language": "언어",
+    "nav.theme": "밝은/어두운 테마 전환",
+    "nav.github": "GitHub",
+    "nav.sections": "섹션 탐색",
+    "nav.features": "기능",
+    "nav.privacy": "프라이버시",
+    "nav.download": "다운로드",
+
+    "hero.eyebrow": "로컬 우선 AI 코딩 텔레메트리",
+    "hero.title": "AI 코딩 도구 사용량 한눈에",
+    "hero.lede": "AI 코딩 도구의 토큰, 비용, 한도, 세션, 추세를 실시간으로 보는 로컬 우선 데스크톱 위젯입니다.",
+    "hero.actions": "주요 작업",
+    "hero.platforms": "지원 플랫폼",
+    "cta.download": "최신 릴리스 다운로드",
+    "cta.github": "GitHub에서 보기",
+
+    "tools.eyebrow": "워크플로의 모든 도구를 추적",
+
+    "feature.title": "토큰, 한도, 추세, 세션 상세를 한 화면에.",
+    "feature.live.title": "실시간 토큰 추적 및 비용",
+    "feature.live.body": "Claude Code, Codex, Hermes, OpenCode, OpenClaw, Cursor, Antigravity, Cline이 매 턴마다 수 초 내 갱신되며, 비용과 캐시 히트율이 함께 표시됩니다. 밝은/어두운 테마를 지원합니다.",
+    "feature.limits.title": "한도에 닿기 전에 AI Tool Limits 확인",
+    "feature.limits.body": "Claude Code, Codex, Cursor, Antigravity, OpenCode, DeepSeek의 session, weekly, billing, credits, balance 창을 확인해 작업 중 갑작스러운 제한을 피할 수 있습니다.",
+    "feature.session.title": "필요할 때만 세션 상세 보기",
+    "feature.session.body": "Claude Code, Codex, OpenCode 세션에서 프롬프트·응답별 토큰을 확인합니다. 로컬 transcript/DB에서 필요할 때만 읽으며 동기화하지 않습니다.",
+    "feature.trends.title": "1년 추세, 위젯 안에서",
+    "feature.trends.body": "Trends 보기로 12개월 사용량, 활동 일수, 연속 일수, peak day를 위젯을 떠나지 않고 확인할 수 있습니다. 더 깊은 분석은 아래 대시보드를 참고하세요.",
+    "feature.status.title": "위젯 안에서 제공자 상태 확인",
+    "feature.status.body": "Claude, OpenAI, Cursor, DeepSeek 서비스 상태를 위젯에서 확인합니다. 각 카드는 진행 중인 incident와 영향받은 컴포넌트 수를 보여 주며, 설정한 간격으로 다시 확인합니다.",
+
+    "dash.title": "1년간의 AI 코딩을 차트로.",
+    "dash.lede": "옵트인 사용 기록을 켜면 Token Mate가 전체 대시보드 창을 엽니다. GitHub 스타일 활동 히트맵, 연속 일수, 기기 전체 도구/모델별 누적 사용(막대·K선)을 제공합니다.",
+    "mock.you": "나",
+    "mock.newest": "↕ 최신",
+    "mock.session.one": "모델 비용 비교...",
+    "mock.session.two": "응답 상세 보기...",
+
+    "surfaces.title": "같은 사용량, 이미 쓰는 모든 화면에.",
+    "surfaces.menubar.title": "메뉴 막대 & 트레이",
+    "surfaces.menubar.body": "macOS와 Windows 시계 옆에 실시간 비용, 토큰, 또는 가장 가까운 한도 %를 표시합니다.",
+    "surfaces.bubble.title": "Floating Bubble",
+    "surfaces.bubble.body": "위젯을 드래그 가능한 미니 창으로 접고, 클릭/호버 미리보기를 지원합니다.",
+    "surfaces.discord.playing": "플레이 중",
+    "surfaces.discord.title": "Discord Rich Presence",
+    "surfaces.discord.body": "오늘 토큰, 비용, 주요 도구를 프로필에 표시합니다. 옵트인.",
+    "surfaces.ios.title": "iOS 위젯",
+    "surfaces.ios.body": "Worker hub와 Widgy 또는 Scriptable로 홈 화면에 오늘 합계를 표시합니다.",
+
+    "how.title": "위젯 하나로 시작. 여러 기기를 묶을 때 hub 추가.",
+    "how.lede": "기본은 로컬입니다. 여러 기기의 토큰 사용량을 한곳에 모을 때만 자체 호스트 동기화를 추가하세요.",
+    "how.local.title": "로컬 모드",
+    "how.local.body": "위젯이 tokscale로 로컬 사용량 요약을 읽고 같은 기기에 표시합니다. 계정도, 클라우드도 필요 없습니다.",
+    "how.pivot.note": "모드 전환 스위치는 없습니다. hub URL을 붙이면 동기화가 시작되고, 비우면 모든 것이 이 기기에만 남습니다.",
+    "how.sync.title": "동기화 모드",
+    "how.sync.body": "각 위젯 또는 headless agent가 기기별 사용량 요약을 hub로 보내고, hub가 합산해 연결된 모든 위젯으로 스트리밍합니다.",
+    "how.node.widget": "Widget",
+    "how.node.tokscale": "tokscale",
+    "how.node.localLogs": "로컬 AI logs",
+    "how.node.mac": "Mac widget",
+    "how.node.windows": "Windows widget",
+    "how.node.agent": "Headless agent",
+    "how.node.hub": "자체 호스트 hub",
+    "how.node.summaryStream": "요약 스트림",
+    "how.backends": "동기화 백엔드 세 가지 중 하나를 고르세요. ingest 프로토콜은 동일합니다.",
+    "how.backends.label": "자체 호스트 가능한 sync backend",
+    "how.backend.widget": "위젯 내장 hub",
+    "how.backend.node": "Node CLI hub",
+    "how.backend.worker": "Cloudflare Worker",
+
+    "privacy.title": "코드와 대화가 제품이 아닙니다.",
+    "privacy.body": "Token Mate는 총량, 비용, 도구/모델 분류, 정규화된 계정 한도 표시에 필요한 필드만 동기화합니다.",
+    "privacy.payload.cap": "hub가 받는 전체 레코드는 숫자, 비용, 라벨, 한도 %뿐입니다. 각 한도 뒤 계정은 단방향 hash이며 로그인 자체는 아닙니다.",
+    "privacy.never": "동기화하지 않음",
+    "privacy.never.1": "원본 프롬프트 또는 소스 파일",
+    "privacy.never.2": "대화 transcript",
+    "privacy.never.3": "OAuth 자격 증명 또는 provider 응답",
+
+    "final.title": "패키징된 앱을 받고 모든 코딩 도구 사용량을 계속 보세요.",
+    "final.readme": "설정 가이드 읽기",
+    "final.downloads": "릴리스 다운로드 옵션",
+    "final.mac.title": "macOS .dmg",
+    "final.mac.body": "Apple Silicon, M1 이후",
+    "final.win.title": "Windows Setup .exe",
+    "final.win.body": "설치판 권장",
+    "final.source": "Intel Mac, Linux, 소스 실행은 README의 고급 설정을 참고하세요.",
+
+    "footer.api": "API 문서",
+    "footer.worker": "Worker 문서",
+    "footer.license": "라이선스"
   }
 };
 
@@ -308,8 +407,15 @@ function normalizeLanguage(value) {
   var lower = normalized.toLowerCase();
   if (lower === "zh" || lower.indexOf("zh-hant") === 0 || lower === "zh-tw" || lower === "zh-hk" || lower === "zh-mo") return "zh-TW";
   if (lower.indexOf("zh-hans") === 0 || lower === "zh-cn" || lower === "zh-sg") return "zh-CN";
+  if (lower.indexOf("ko") === 0 || lower === "kr") return "ko";
   if (lower.indexOf("en") === 0) return "en";
   return "";
+}
+function languageShortLabel(language) {
+  if (language === "zh-TW") return "繁";
+  if (language === "zh-CN") return "简";
+  if (language === "ko") return "KO";
+  return "EN";
 }
 function readStoredLanguage() { try { return normalizeLanguage(window.localStorage.getItem(languageStorageKey)); } catch (e) { return ""; } }
 function storeLanguage(language) { try { window.localStorage.setItem(languageStorageKey, language); } catch (e) {} }
@@ -338,7 +444,7 @@ function applyLanguage(language) {
   var langBtns = document.querySelectorAll("[data-lang]");
   for (var j = 0; j < langBtns.length; j++) langBtns[j].setAttribute("aria-checked", String(langBtns[j].getAttribute("data-lang") === active));
   var cur = document.querySelector("[data-lang-current]");
-  if (cur) cur.textContent = active === "zh-TW" ? "繁" : active === "zh-CN" ? "简" : "EN";
+  if (cur) cur.textContent = languageShortLabel(active);
   storeLanguage(active);
   if (window.location.hash !== "#" + active) window.history.replaceState(null, "", "#" + active);
 }

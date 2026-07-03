@@ -262,6 +262,7 @@ are gitignored.
 | [docs/API.md](docs/API.md) | Hub HTTP API reference |
 | [worker/README.md](worker/README.md) | Cloudflare Worker deployment |
 | [docs/hermes-wsl-setup.md](docs/hermes-wsl-setup.md) | Hermes Agent on WSL (Chinese) |
+| [GitHub Pages site](https://atukunare.github.io/token-mate/) | Marketing site (EN / KO / 简 / 繁) |
 
 ## Acknowledgments
 
