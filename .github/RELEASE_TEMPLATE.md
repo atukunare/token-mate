@@ -4,15 +4,17 @@
 
 ## What's changed
 
+First public **Token Mate** release (`atukunare/token-mate`).
+
 ### Added
-- New **Home** view: a default overview that combines a limits alert, top models, a usage trend, and a 12-month activity heatmap on one screen.
-- A new view switcher lets you jump straight to any view, alongside the existing button that cycles to the next one.
-- **Windows:** usage from running WSL distributions is now scanned and merged into your totals automatically (on by default).
-- **OpenCode multiple accounts:** add several OpenCode accounts as named profiles, each with its own rate-limit tracking. (#24)
-- Usage tracking for three more tools: **Pi, Zed, and Kilo Code**. (#25)
+- Rebrand from upstream Token Monitor to **Token Mate** (app, docs, GitHub Pages).
+- **Korean** UI strings and `README.ko.md`; GitHub Pages site locale (EN / KO / 简 / 繁).
+- macOS **launchd** helpers (`npm run launchd:install`) for auto-start on login.
+- DeepSeek API key persistence and saved-key panel in Settings.
 
 ### Fixed
-- OpenCode session cookies are no longer included in the renderer settings payload.
+- Menu bar limit display modes for Cursor / Antigravity fallbacks.
+- OpenCode visibility toggle and related collector behavior from upstream merges.
 
 ## Which file should I download?
 
@@ -46,15 +48,17 @@ open-source: https://github.com/junhoyeo/tokscale
 
 ## 更新内容
 
+**Token Mate** 首个公开发布（`atukunare/token-mate`）。
+
 ### 新增
-- 全新 **主页** 视图：将额度提醒、热门模型、用量趋势和近 12 个月的活动热力图整合到一个概览页面，并作为默认首页。
-- 新增视图切换菜单，可直接跳转到任意视图；原本的按钮仍可循环切换到下一个视图。
-- **Windows：** 现在会自动扫描正在运行的 WSL 发行版用量并合并进总计（默认开启）。
-- **OpenCode 多账号：** 可将多个 OpenCode 账号保存为命名设定档，每个账号都有独立的额度追踪。(#24)
-- 新增三个工具的用量追踪：**Pi、Zed 和 Kilo Code**。(#25)
+- 从上游 Token Monitor 更名为 **Token Mate**（应用、文档、GitHub Pages）。
+- **韩语**界面与 `README.ko.md`；GitHub Pages 多语言（EN / KO / 简 / 繁）。
+- macOS **launchd** 自启动脚本（`npm run launchd:install`）。
+- DeepSeek API 密钥持久化与设置页已保存密钥面板。
 
 ### 修复
-- OpenCode 的会话 cookie 不再出现在渲染层的设置数据中。
+- Cursor / Antigravity 额度显示模式的菜单栏回退逻辑。
+- 上游合并带来的 OpenCode 显示开关与采集器相关问题。
 
 ## 应该下载哪个文件？
 
